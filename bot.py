@@ -65,14 +65,69 @@ async def embed(interaction: discord.Interaction, title: str, description: str, 
 
 @bot.command(name='purge')
 @commands.has_permissions(manage_messages=True)
-async def prefix_purge(ctx, amount: int):
+async def purge(ctx, amount: int):
     if amount < 1 or amount > 100:
-        await ctx.send("Die Anzahl muss zwischen 1 und 100 liegen.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Die Anzahl muss zwischen 1 und 100 liegen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
         return
 
-    await ctx.send(f"Lösche {amount} Nachrichten...")
-    await ctx.channel.purge(limit=amount)
-    await ctx.send(f"{amount} Nachrichten wurden gelöscht.")
+    try:
+        await ctx.send(f"Lösche {amount} Nachrichten...")
+
+        
+        deleted = await ctx.channel.purge(limit=amount)
+
+        
+        embed = discord.Embed(
+            title="Nachrichten gelöscht",
+            description=f"{amount} Nachrichten wurden gelöscht.",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="Gelöschte Nachrichten", value=f"{len(deleted)} Nachrichten", inline=False)
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+
+        await ctx.send(embed=embed)
+    except discord.Forbidden:
+        embed = discord.Embed(
+            title="Fehler",
+            description="Ich habe nicht die Berechtigung, Nachrichten zu löschen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+    except discord.HTTPException as e:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Ein HTTP-Fehler ist aufgetreten: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Ein unerwarteter Fehler ist aufgetreten: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+
+@purge.error
+async def purge_error(ctx, error):
+    embed = discord.Embed(
+        title="Fehler",
+        description=f"Ein Fehler ist aufgetreten: {error}",
+        color=discord.Color.red()
+    )
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
+    await ctx.send(embed=embed)
+
+
 
 @bot.command(name='github')
 async def github(ctx):
@@ -300,27 +355,22 @@ async def embed(ctx, *, content: str = None):
 @bot.command()
 @commands.has_permissions(ban_members=True)
 async def ban(ctx, member: discord.Member, *, reason=None):
-    
     allowed = any(role.id in ALLOWED_ROLE_IDS for role in ctx.author.roles)
     if not allowed:
-        await ctx.send("Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
         return
 
     if reason is None:
         reason = "Kein Grund angegeben"
 
-    
     try:
         await member.ban(reason=reason)
-        await ctx.send(f"{member.mention} wurde aus dem Server gebannt.")
-
-        
-        try:
-            await member.send(f"Du wurdest aus dem Server gebannt. Grund: {reason}")
-        except discord.Forbidden:
-            pass  
-
-
         embed = discord.Embed(
             title="Mitglied Gebannt",
             description=f"{member.mention} wurde aus dem Server gebannt.",
@@ -328,25 +378,53 @@ async def ban(ctx, member: discord.Member, *, reason=None):
         )
         embed.add_field(name="Grund", value=reason, inline=False)
         embed.add_field(name="Ausführender", value=ctx.author.mention, inline=False)
-
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
 
         log_channel = bot.get_channel(1269261771953147925)
         await log_channel.send(embed=embed)
 
-    except discord.Forbidden:
-        await ctx.send("Ich habe nicht die Berechtigung, diesen Benutzer zu bannen. Überprüfen Sie die Rolle des Bots.")
-    except discord.HTTPException as e:
-        await ctx.send(f"Ein HTTP-Fehler ist aufgetreten: {e}")
-    except Exception as e:
-        await ctx.send(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
+        try:
+            await member.send(f"Du wurdest aus dem Server gebannt. Grund: {reason}")
+        except discord.Forbidden:
+            pass  
 
+        await ctx.send(embed=embed)
+
+    except discord.Forbidden:
+        embed = discord.Embed(
+            title="Fehler",
+            description="Ich habe nicht die Berechtigung, diesen Benutzer zu bannen. Überprüfen Sie die Rolle des Bots.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+    except discord.HTTPException as e:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Ein HTTP-Fehler ist aufgetreten: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Ein unerwarteter Fehler ist aufgetreten: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
 
 @ban.error
 async def ban_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("Du hast nicht die erforderlichen Berechtigungen, um diesen Befehl auszuführen.")
-    else:
-        await ctx.send(f"Ein Fehler ist aufgetreten: {error}")
+    embed = discord.Embed(
+        title="Fehler",
+        description=f"Ein Fehler ist aufgetreten: {error}",
+        color=discord.Color.red()
+    )
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
+    await ctx.send(embed=embed)
+
 
 
 
@@ -354,23 +432,21 @@ async def ban_error(ctx, error):
 @bot.command()
 @commands.has_permissions(ban_members=True)
 async def unban(ctx, user_id: int, *, reason=None):
-
     allowed = any(role.id in ALLOWED_ROLE_IDS for role in ctx.author.roles)
     if not allowed:
-        await ctx.send("Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
         return
 
     try:
         user = await bot.fetch_user(user_id)
         await ctx.guild.unban(user, reason=reason)
 
-       
-        try:
-            await user.send(f"Du wurdest von {ctx.guild.name} entbannt. Grund: {reason if reason else 'Kein Grund angegeben'}")
-        except discord.Forbidden:
-            pass  
-
-        
         embed = discord.Embed(
             title="Mitglied Entbannt",
             description=f"{user.mention} wurde vom Server entbannt.",
@@ -378,28 +454,61 @@ async def unban(ctx, user_id: int, *, reason=None):
         )
         embed.add_field(name="Grund", value=reason if reason else "Kein Grund angegeben", inline=False)
         embed.add_field(name="Ausführender", value=ctx.author.mention, inline=False)
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
 
-        
         log_channel = bot.get_channel(1269261771953147925)
         await log_channel.send(embed=embed)
 
-        
+        try:
+            await user.send(f"Du wurdest von {ctx.guild.name} entbannt. Grund: {reason if reason else 'Kein Grund angegeben'}")
+        except discord.Forbidden:
+            pass  
+
         await ctx.send(embed=embed)
 
     except discord.NotFound:
-        await ctx.send("Der Benutzer ist nicht auf dem Server gebannt.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Der Benutzer ist nicht auf dem Server gebannt.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
     except discord.Forbidden:
-        await ctx.send("Ich habe nicht die Berechtigung, diesen Benutzer zu entbannen.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Ich habe nicht die Berechtigung, diesen Benutzer zu entbannen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
     except discord.HTTPException as e:
-        await ctx.send(f"Ein HTTP-Fehler ist aufgetreten: {e}")
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Ein HTTP-Fehler ist aufgetreten: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
     except Exception as e:
-        await ctx.send(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
-
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Ein unerwarteter Fehler ist aufgetreten: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
 
 @unban.error
 async def unban_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("Du hast nicht die erforderlichen Berechtigungen, um diesen Befehl auszuführen.")
+    embed = discord.Embed(
+        title="Fehler",
+        description=f"Ein Fehler ist aufgetreten: {error}",
+        color=discord.Color.red()
+    )
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
+    await ctx.send(embed=embed)
+
 
 
 
@@ -408,14 +517,26 @@ async def unban_error(ctx, error):
 async def mute(ctx, member: discord.Member, duration: str = None, *, reason=None):
     allowed = any(role.id in ALLOWED_ROLE_IDS for role in ctx.author.roles)
     if not allowed:
-        await ctx.send("Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
         return
 
     mute_role_id = 1284531978284171275  
     mute_role = discord.utils.get(ctx.guild.roles, id=mute_role_id)
 
     if not mute_role:
-        await ctx.send("Die Mute-Rolle wurde nicht gefunden. Bitte überprüfe die Rolle-ID.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Die Mute-Rolle wurde nicht gefunden. Bitte überprüfe die Rolle-ID.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
         return
 
     try:
@@ -433,6 +554,7 @@ async def mute(ctx, member: discord.Member, duration: str = None, *, reason=None
         )
         embed.add_field(name="Grund", value=reason if reason else "Kein Grund angegeben", inline=False)
         embed.add_field(name="Ausführender", value=ctx.author.mention, inline=False)
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
 
         log_channel = bot.get_channel(1269261771953147925)
         await log_channel.send(embed=embed)
@@ -443,24 +565,67 @@ async def mute(ctx, member: discord.Member, duration: str = None, *, reason=None
                 duration_seconds = int(duration)
                 await asyncio.sleep(duration_seconds)
                 await member.remove_roles(mute_role, reason="Mute-Dauer abgelaufen")
-                await ctx.send(f"{member.mention} wurde automatisch entmuttet.")
+                
+                embed = discord.Embed(
+                    title="Mute aufgehoben",
+                    description=f"{member.mention} wurde automatisch entmuttet.",
+                    color=discord.Color.green()
+                )
+                embed.set_footer(text="Made with ♥️ by Atzen Development")
+                await ctx.send(embed=embed)
             except ValueError:
-                await ctx.send("Bitte gib die Dauer in Sekunden als Ganzzahl ein.")
+                embed = discord.Embed(
+                    title="Fehler",
+                    description="Bitte gib die Dauer in Sekunden als Ganzzahl ein.",
+                    color=discord.Color.red()
+                )
+                embed.set_footer(text="Made with ♥️ by Atzen Development")
+                await ctx.send(embed=embed)
         else:
-            await ctx.send("Kein Enddatum angegeben. Der Benutzer bleibt stummgeschaltet, bis der Mute manuell aufgehoben wird.")
+            embed = discord.Embed(
+                title="Mitglied Gemutet",
+                description="Kein Enddatum angegeben. Der Benutzer bleibt stummgeschaltet, bis der Mute manuell aufgehoben wird.",
+                color=discord.Color.orange()
+            )
+            embed.set_footer(text="Made with ♥️ by Atzen Development")
+            await ctx.send(embed=embed)
+            
     except discord.Forbidden:
-        await ctx.send("Ich habe nicht die Berechtigung, diese Rolle hinzuzufügen.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Ich habe nicht die Berechtigung, diese Rolle hinzuzufügen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
     except discord.HTTPException as e:
-        await ctx.send(f"Ein HTTP-Fehler ist aufgetreten: {e}")
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Ein HTTP-Fehler ist aufgetreten: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
     except Exception as e:
-        await ctx.send(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Ein unerwarteter Fehler ist aufgetreten: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
 
 @mute.error
 async def mute_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("Du hast nicht die erforderlichen Berechtigungen, um diesen Befehl auszuführen.")
-    else:
-        await ctx.send(f"Ein Fehler ist aufgetreten: {error}")
+    embed = discord.Embed(
+        title="Fehler",
+        description=f"Ein Fehler ist aufgetreten: {error}",
+        color=discord.Color.red()
+    )
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
+    await ctx.send(embed=embed)
+
+
 
 @bot.command()
 @commands.has_permissions(manage_roles=True)
