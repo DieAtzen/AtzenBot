@@ -20,15 +20,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-@bot.event
-async def on_ready():
-    print(f'Bot ist eingeloggt als {bot.user.name}')
-    await bot.change_presence(activity=discord.Game(name='!command für Hilfe'))
-@bot.event
-async def on_ready():
-    print(f'Bot ist eingeloggt als {bot.user.name}')
-    await bot.change_presence(activity=discord.Game(name='!command für Hilfe'))
-
 
 @bot.command()
 async def command(ctx):
@@ -44,8 +35,63 @@ async def command(ctx):
     embed.add_field(name="!mute", value="Stummstellt einen Benutzer.", inline=False)
     embed.add_field(name="!unmute", value="Entmuttet einen Benutzer.", inline=False)
     embed.add_field(name="!muteconfig", value="Setzt die Berechtigungen für die Mute-Rolle in allen Textkanälen.", inline=False)
+    embed.add_field(name="!purge", value="Löscht Nachrichten in einem Kanal", inline=False)
+    embed.add_field(name="!bibel", value="Schickt die Bibel des heiligen Reddington", inline=False)
+    embed.add_field(name="**/**embed", value="Schickt eine Nachricht in einem Embed", inline=False)
 
     await ctx.send(embed=embed)
+
+@bot.event
+async def on_ready():
+    print(f'Bot ist eingeloggt als {bot.user.name}')
+    await bot.change_presence(activity=discord.Game(name='!command für Hilfe'))
+
+@bot.tree.command(name="embed", description="Sendet eine Embed-Nachricht")
+async def embed(interaction: discord.Interaction, title: str, description: str, color: str):
+    # Hex zu Integer
+    color_int = int(color.replace('#', ''), 16)
+    
+    embed = discord.Embed(
+        title=title,
+        description=description,
+        color=color_int
+    )
+    await interaction.response.send_message(embed=embed)
+    await interaction.message.delete()
+
+@bot.command(name='purge')
+@commands.has_permissions(manage_messages=True)
+async def prefix_purge(ctx, amount: int):
+    if amount < 1 or amount > 100:
+        await ctx.send("Die Anzahl muss zwischen 1 und 100 liegen.")
+        return
+
+    await ctx.send(f"Lösche {amount} Nachrichten...")
+    await ctx.channel.purge(limit=amount)
+    await ctx.send(f"{amount} Nachrichten wurden gelöscht.")
+
+@bot.command()
+async def embed(ctx, *, content: str = None):
+    if content is None:
+        await ctx.send("Fehler: Du musst einen Titel und eine Beschreibung angeben. Benutze das Format: `!embed Titel | Beschreibung`.")
+        return
+    
+    try:
+        title, description = content.split("|", 1)
+    except ValueError:
+        await ctx.send("Fehler: Du hast das falsche Format verwendet. Benutze das Format: `!embed Titel | Beschreibung`.")
+        return
+
+    embed = discord.Embed(
+        title=title.strip(),
+        description=description.strip(),
+        color=discord.Color.blue()
+    )
+
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
+
+
 
 @bot.command()
 @commands.has_permissions(ban_members=True)
