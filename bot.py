@@ -13,7 +13,8 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f'Bot {bot.user.name} ist online!')
+    print(f'Bot ist eingeloggt als {bot.user.name}')
+    await bot.change_presence(activity=discord.Game(name='!command für Hilfe'))
 
 @bot.command()
 async def command(ctx):
