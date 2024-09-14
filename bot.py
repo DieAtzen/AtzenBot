@@ -1,4 +1,5 @@
 import discord
+import asyncio
 from discord.ext import commands
 
 # TOKEN 
@@ -143,8 +144,7 @@ async def unban_error(ctx, error):
 
 @bot.command()
 @commands.has_permissions(manage_roles=True)
-async def mute(ctx, member: discord.Member, *, reason=None):
-    
+async def mute(ctx, member: discord.Member, duration: str = None, *, reason=None):
     allowed = any(role.id in ALLOWED_ROLE_IDS for role in ctx.author.roles)
     if not allowed:
         await ctx.send("Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.")
@@ -160,13 +160,11 @@ async def mute(ctx, member: discord.Member, *, reason=None):
     try:
         await member.add_roles(mute_role, reason=reason)
 
-       
         try:
             await member.send(f"Du wurdest in {ctx.guild.name} stummgeschaltet. Grund: {reason if reason else 'Kein Grund angegeben'}")
         except discord.Forbidden:
-            pass  
+            pass
 
-        
         embed = discord.Embed(
             title="Mitglied Gemutet",
             description=f"{member.mention} wurde in {ctx.guild.name} stummgeschaltet.",
@@ -175,20 +173,26 @@ async def mute(ctx, member: discord.Member, *, reason=None):
         embed.add_field(name="Grund", value=reason if reason else "Kein Grund angegeben", inline=False)
         embed.add_field(name="Ausführender", value=ctx.author.mention, inline=False)
 
-        
         log_channel = bot.get_channel(1269261771953147925)
         await log_channel.send(embed=embed)
-
-        
         await ctx.send(embed=embed)
 
+        if duration:
+            try:
+                duration_seconds = int(duration)
+                await asyncio.sleep(duration_seconds)
+                await member.remove_roles(mute_role, reason="Mute-Dauer abgelaufen")
+                await ctx.send(f"{member.mention} wurde automatisch entmuttet.")
+            except ValueError:
+                await ctx.send("Bitte gib die Dauer in Sekunden als Ganzzahl ein.")
+        else:
+            await ctx.send("Kein Enddatum angegeben. Der Benutzer bleibt stummgeschaltet, bis der Mute manuell aufgehoben wird.")
     except discord.Forbidden:
         await ctx.send("Ich habe nicht die Berechtigung, diese Rolle hinzuzufügen.")
     except discord.HTTPException as e:
         await ctx.send(f"Ein HTTP-Fehler ist aufgetreten: {e}")
     except Exception as e:
         await ctx.send(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
-
 
 @mute.error
 async def mute_error(ctx, error):
