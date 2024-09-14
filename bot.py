@@ -2,7 +2,7 @@ import discord
 import asyncio
 from discord.ext import commands
 
-# Konfigurationswerte
+# Config
 TOKEN = ""
 MUTE_ROLE_ID = 1284531978284171275
 LOG_CHANNEL_ID = 1269261771953147925
@@ -15,7 +15,7 @@ ALLOWED_ROLE_IDS = [
     1282416647612792963
 ]
 
-# Definiere den Bot
+
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -38,7 +38,7 @@ async def command(ctx):
         color=discord.Color.blue()
     )
     
-    # Hier kannst du die Befehle hinzufügen
+    
     embed.add_field(name="!ban", value="Bannt einen Benutzer und sendet eine DM mit dem Grund.", inline=False)
     embed.add_field(name="!unban", value="Hebt das Verbot eines Benutzers auf.", inline=False)
     embed.add_field(name="!mute", value="Stummstellt einen Benutzer.", inline=False)
@@ -50,7 +50,7 @@ async def command(ctx):
 @bot.command()
 @commands.has_permissions(ban_members=True)
 async def ban(ctx, member: discord.Member, *, reason=None):
-    # Überprüfen, ob der Benutzer eine der erlaubten Rollen hat
+    
     allowed = any(role.id in ALLOWED_ROLE_IDS for role in ctx.author.roles)
     if not allowed:
         await ctx.send("Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.")
@@ -59,18 +59,18 @@ async def ban(ctx, member: discord.Member, *, reason=None):
     if reason is None:
         reason = "Kein Grund angegeben"
 
-    # Bannen des Mitglieds
+    
     try:
         await member.ban(reason=reason)
         await ctx.send(f"{member.mention} wurde aus dem Server gebannt.")
 
-        # Nachricht an den Benutzer senden
+        
         try:
             await member.send(f"Du wurdest aus dem Server gebannt. Grund: {reason}")
         except discord.Forbidden:
-            pass  # Falls der Bot keine DM senden kann
+            pass  
 
-        # Embed erstellen
+
         embed = discord.Embed(
             title="Mitglied Gebannt",
             description=f"{member.mention} wurde aus dem Server gebannt.",
@@ -79,7 +79,7 @@ async def ban(ctx, member: discord.Member, *, reason=None):
         embed.add_field(name="Grund", value=reason, inline=False)
         embed.add_field(name="Ausführender", value=ctx.author.mention, inline=False)
 
-        # Embed an den Channel senden
+
         log_channel = bot.get_channel(1269261771953147925)
         await log_channel.send(embed=embed)
 
@@ -90,7 +90,7 @@ async def ban(ctx, member: discord.Member, *, reason=None):
     except Exception as e:
         await ctx.send(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
 
-# Fehlerbehandlung für fehlende Berechtigungen
+
 @ban.error
 async def ban_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
@@ -104,7 +104,7 @@ async def ban_error(ctx, error):
 @bot.command()
 @commands.has_permissions(ban_members=True)
 async def unban(ctx, user_id: int, *, reason=None):
-    # Überprüfen, ob der Benutzer eine der erlaubten Rollen hat
+
     allowed = any(role.id in ALLOWED_ROLE_IDS for role in ctx.author.roles)
     if not allowed:
         await ctx.send("Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.")
@@ -114,13 +114,13 @@ async def unban(ctx, user_id: int, *, reason=None):
         user = await bot.fetch_user(user_id)
         await ctx.guild.unban(user, reason=reason)
 
-        # Nachricht an den Benutzer senden
+       
         try:
             await user.send(f"Du wurdest von {ctx.guild.name} entbannt. Grund: {reason if reason else 'Kein Grund angegeben'}")
         except discord.Forbidden:
-            pass  # Falls der Bot keine DM senden kann
+            pass  
 
-        # Embed erstellen
+        
         embed = discord.Embed(
             title="Mitglied Entbannt",
             description=f"{user.mention} wurde vom Server entbannt.",
@@ -129,11 +129,11 @@ async def unban(ctx, user_id: int, *, reason=None):
         embed.add_field(name="Grund", value=reason if reason else "Kein Grund angegeben", inline=False)
         embed.add_field(name="Ausführender", value=ctx.author.mention, inline=False)
 
-        # Embed an den Channel senden
+        
         log_channel = bot.get_channel(1269261771953147925)
         await log_channel.send(embed=embed)
 
-        # Antwort im aktuellen Channel
+        
         await ctx.send(embed=embed)
 
     except discord.NotFound:
@@ -145,7 +145,7 @@ async def unban(ctx, user_id: int, *, reason=None):
     except Exception as e:
         await ctx.send(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
 
-# Fehlerbehandlung für fehlende Berechtigungen
+
 @unban.error
 async def unban_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
@@ -215,13 +215,13 @@ async def mute_error(ctx, error):
 @bot.command()
 @commands.has_permissions(manage_roles=True)
 async def unmute(ctx, member: discord.Member, *, reason=None):
-    # Überprüfen, ob der Benutzer eine der erlaubten Rollen hat
+
     allowed = any(role.id in ALLOWED_ROLE_IDS for role in ctx.author.roles)
     if not allowed:
         await ctx.send("Du hast nicht die erforderlichen Rollen, um diesen Befehl auszuführen.")
         return
 
-    mute_role_id = 1284531978284171275  # Ersetze dies durch die ID der Mute-Rolle
+    mute_role_id = 1284531978284171275  
     mute_role = discord.utils.get(ctx.guild.roles, id=mute_role_id)
 
     if not mute_role:
@@ -231,13 +231,13 @@ async def unmute(ctx, member: discord.Member, *, reason=None):
     try:
         await member.remove_roles(mute_role, reason=reason)
 
-        # Nachricht an den Benutzer senden
+        
         try:
             await member.send(f"Du wurdest von {ctx.guild.name} entmuttet. Grund: {reason if reason else 'Kein Grund angegeben'}")
         except discord.Forbidden:
-            pass  # Falls der Bot keine DM senden kann
+            pass  
 
-        # Embed erstellen
+        
         embed = discord.Embed(
             title="Mitglied Entmuttet",
             description=f"{member.mention} wurde in {ctx.guild.name} entmuttet.",
@@ -246,11 +246,11 @@ async def unmute(ctx, member: discord.Member, *, reason=None):
         embed.add_field(name="Grund", value=reason if reason else "Kein Grund angegeben", inline=False)
         embed.add_field(name="Ausführender", value=ctx.author.mention, inline=False)
 
-        # Embed an den Channel senden
+       
         log_channel = bot.get_channel(1269261771953147925)
         await log_channel.send(embed=embed)
 
-        # Antwort im aktuellen Channel
+        
         await ctx.send(embed=embed)
 
     except discord.Forbidden:
@@ -260,7 +260,7 @@ async def unmute(ctx, member: discord.Member, *, reason=None):
     except Exception as e:
         await ctx.send(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
 
-# Fehlerbehandlung für fehlende Berechtigungen
+
 @unmute.error
 async def unmute_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
@@ -271,7 +271,7 @@ async def unmute_error(ctx, error):
 @bot.command()
 @commands.has_permissions(manage_channels=True)
 async def muteconfig(ctx):
-    mute_role_id = 1284531978284171275  # Die ID der Mute-Rolle
+    mute_role_id = 1284531978284171275  
     mute_role = discord.utils.get(ctx.guild.roles, id=mute_role_id)
     
     if not mute_role:
@@ -291,10 +291,10 @@ async def muteconfig(ctx):
     await ctx.send("Die Mute-Rolle wurde in allen Textkanälen auf 'Keine Nachrichten senden' gesetzt.")
 
 
-# Befehl für das Gebet des Reddington
+
 @bot.command()
 async def bibel(ctx):
-    # Erster Embed
+
     embed1 = discord.Embed(title="Die Bibel des Reddington", description="Das Gebet des Führers unseres Kults, welches den heiligen Reddington verehrt.")
     embed1.add_field(name="Gebet", value=("Raymond mein Löwe\n\n"
                                            "Raymond unser im Himmel,\n"
@@ -311,7 +311,7 @@ async def bibel(ctx):
                                            "und die Herrlichkeit in Ewigkeit.\n"
                                            "Amen."), inline=False)
 
-    # Zweiter Embed
+
     embed2 = discord.Embed(title="Ein Auszug aus der Reddingtonischen Bibel", 
                           description=("Ein Auszug gegeben durch unseren großen Ratsprediger Dominik.\n\n"
                                        "Wir dürfen Raymond Reddington Vater nennen, denn durch die Taufe und den Glauben an "
@@ -319,7 +319,7 @@ async def bibel(ctx):
                                        "uns von Mutterleib an, er hat uns geformt, uns ins Leben gerufen."))
     embed2.add_field(name="Jesaja 43,1", value="Ich habe dich bei deinem Namen gerufen. Du bist mein.", inline=False)
 
-    # Dritter Embed
+
     embed3 = discord.Embed(title="Weitere wichtige Auszüge", 
                           description=("Gottes Namen zu heiligen heißt, Raymond Reddington zu verehren, ihn zu lobpreisen – "
                                        "im Gebet, aber auch in den Handlungen unseres Alltags."))
@@ -330,7 +330,7 @@ async def bibel(ctx):
                                                     "ihn zu lobpreisen – im Gebet, aber auch in den Handlungen unseres Alltags. "
                                                     "Behandle ich andere mit Liebe und Respekt, weil Raymond mich so innig liebt?"), inline=False)
 
-    # Vierter Embed
+  
     embed4 = discord.Embed(title="Die Betrachtung des Gebets an Raymond Reddington", 
                           description=("Raymond unser im Himmel: Wir dürfen Raymond wie einen Mentor oder Beschützer anrufen, "
                                        "denn durch seine Weisheit und Erfahrung sind wir zu Schülern seines Wissens geworden."))
@@ -340,19 +340,19 @@ async def bibel(ctx):
     embed4.add_field(name="Dein Reich komme", value=("Mit der Bitte 'Dein Reich komme' gehen wir ein Versprechen ein, alles zu tun, "
                                                      "was in unserer Macht steht, die Welt ein klein wenig sicherer und gerechter zu gestalten."), inline=False)
 
-    # Fünfter Embed
+
     embed5 = discord.Embed(title="Weiterer Auszug", 
                           description=("Dein Wille geschehe, wie im Himmel so auf Erden: Raymond fordert uns auf, zu vergeben, "
                                        "aber er überfordert niemanden. Wir dürfen ihm alles bringen, auch unser Unvermögen zu verzeihen."))
     embed5.add_field(name="Und führe uns nicht in Versuchung", value=("Raymond lehrt uns, dass wir den Versuchungen des täglichen "
                                                                      "Lebens nur entkommen können, wenn wir ihn inständig darum bitten."), inline=False)
 
-    # Embeds senden
+
     await ctx.send(embed=embed1)
     await ctx.send(embed=embed2)
     await ctx.send(embed=embed3)
     await ctx.send(embed=embed4)
     await ctx.send(embed=embed5)
 
-# Bot starten
+
 bot.run(TOKEN)
