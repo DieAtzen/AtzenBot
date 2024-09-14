@@ -906,32 +906,90 @@ async def muteconfig(ctx):
 @bot.command(name='serverinfo')
 async def serverinfo(ctx):
     guild = ctx.guild
-    embed = discord.Embed(
-        title=f"Informationen über den Server: {guild.name}",
-        description=f"Hier sind die Details zu diesem Server:",
-        color=discord.Color.blue()
-    )
+    try:
+        embed = discord.Embed(
+            title=f"Informationen über den Server: {guild.name}",
+            description=f"Hier sind die Details zu diesem Server:",
+            color=discord.Color.blue()
+        )
 
-    embed.set_thumbnail(url=guild.icon.url)
-    owner = guild.owner
-    embed.add_field(name="Inhaber", value=owner.mention, inline=True)
-    creation_date = guild.created_at.strftime("%d.%m.%Y %H:%M:%S")
-    embed.add_field(name="Erstellt am", value=creation_date, inline=True)
-    member_count = guild.member_count
-    embed.add_field(name="Mitglieder", value=str(member_count), inline=True)
-    channel_count = len(guild.channels)
-    embed.add_field(name="Kanalanzahl", value=str(channel_count), inline=True)
-    region = str(guild.region).capitalize()
-    embed.add_field(name="Region", value=region, inline=True)
-    boost_level = guild.premium_tier
-    embed.add_field(name="Boost-Level", value=f"Level {boost_level}", inline=True)
-    verification_level = str(guild.verification_level).capitalize()
-    embed.add_field(name="Verifizierungsstufe", value=verification_level, inline=True)
-    invite_url = f"https://discord.gg/{guild.id}"
-    embed.add_field(name="Einladungslink", value=invite_url, inline=True)
+        embed.set_thumbnail(url=guild.icon.url)
+        
+        # Besitzer
+        owner = guild.owner
+        if owner:
+            embed.add_field(name="Inhaber", value=owner.mention, inline=True)
+        else:
+            embed.add_field(name="Inhaber", value="Unbekannt", inline=True)
 
-    embed.set_footer(text="Made with ♥️ by Atzen Development")
-    await ctx.send(embed=embed)
+        # Erstellung
+        creation_date = guild.created_at.strftime("%d.%m.%Y %H:%M:%S")
+        embed.add_field(name="Erstellt am", value=creation_date, inline=True)
+
+        # Mitgliederanzahl
+        member_count = guild.member_count
+        embed.add_field(name="Mitglieder", value=str(member_count), inline=True)
+
+        # Kanalanzahl
+        channel_count = len(guild.channels)
+        embed.add_field(name="Kanalanzahl", value=str(channel_count), inline=True)
+
+        # Region
+        region = str(guild.region).capitalize()
+        embed.add_field(name="Region", value=region, inline=True)
+
+        # Boost-Level
+        boost_level = guild.premium_tier
+        embed.add_field(name="Boost-Level", value=f"Level {boost_level}", inline=True)
+
+        # Verifizierungsstufe
+        verification_level = str(guild.verification_level).capitalize()
+        embed.add_field(name="Verifizierungsstufe", value=verification_level, inline=True)
+
+        # Footer
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+
+        await ctx.send(embed=embed)
+
+    except AttributeError as e:
+        error_embed = discord.Embed(
+            title="Fehler",
+            description="Beim Abrufen der Serverinformationen ist ein Attributfehler aufgetreten.",
+            color=discord.Color.red()
+        )
+        error_embed.add_field(name="Details", value=str(e))
+        await ctx.send(embed=error_embed)
+        print(f"Fehler beim Abrufen der Serverinformationen: {e}")
+
+    except discord.Forbidden:
+        error_embed = discord.Embed(
+            title="Fehler",
+            description="Ich habe nicht die Berechtigung, die Serverinformationen abzurufen.",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=error_embed)
+        print("Fehler: Berechtigungen fehlen.")
+
+    except discord.HTTPException as e:
+        error_embed = discord.Embed(
+            title="Fehler",
+            description="Ein HTTP-Fehler ist aufgetreten.",
+            color=discord.Color.red()
+        )
+        error_embed.add_field(name="Details", value=str(e))
+        await ctx.send(embed=error_embed)
+        print(f"HTTP-Fehler: {e}")
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="Fehler",
+            description="Ein unerwarteter Fehler ist aufgetreten.",
+            color=discord.Color.red()
+        )
+        error_embed.add_field(name="Details", value=str(e))
+        await ctx.send(embed=error_embed)
+        print(f"Unerwarteter Fehler: {e}")
+
 
 
 @bot.command()
