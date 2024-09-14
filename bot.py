@@ -905,90 +905,36 @@ async def muteconfig(ctx):
 
 @bot.command(name='serverinfo')
 async def serverinfo(ctx):
-    guild = ctx.guild
     try:
+        guild = ctx.guild
+
         embed = discord.Embed(
-            title=f"Informationen über den Server: {guild.name}",
-            description=f"Hier sind die Details zu diesem Server:",
+            title=f"Serverinfo für {guild.name}",
             color=discord.Color.blue()
         )
 
         embed.set_thumbnail(url=guild.icon.url)
-        
-        # Besitzer
-        owner = guild.owner
-        if owner:
-            embed.add_field(name="Inhaber", value=owner.mention, inline=True)
-        else:
-            embed.add_field(name="Inhaber", value="Unbekannt", inline=True)
+        embed.add_field(name="Server Name", value=guild.name, inline=False)
+        embed.add_field(name="Server ID", value=guild.id, inline=False)
+        embed.add_field(name="Server Erstellungsdatum", value=guild.created_at.strftime("%d.%m.%Y %H:%M:%S"), inline=False)
+        embed.add_field(name="Server Boost Level", value=str(guild.premium_tier), inline=False)
+        embed.add_field(name="Boost Count", value=str(guild.premium_subscription_count), inline=False)
+        embed.add_field(name="Total Members", value=str(guild.member_count), inline=False)
+        embed.add_field(name="Total Channels", value=str(len(guild.channels)), inline=False)
+        embed.add_field(name="Total Roles", value=str(len(guild.roles)), inline=False)
 
-        # Erstellung
-        creation_date = guild.created_at.strftime("%d.%m.%Y %H:%M:%S")
-        embed.add_field(name="Erstellt am", value=creation_date, inline=True)
-
-        # Mitgliederanzahl
-        member_count = guild.member_count
-        embed.add_field(name="Mitglieder", value=str(member_count), inline=True)
-
-        # Kanalanzahl
-        channel_count = len(guild.channels)
-        embed.add_field(name="Kanalanzahl", value=str(channel_count), inline=True)
-
-        # Boost-Level
-        boost_level = guild.premium_tier
-        embed.add_field(name="Boost-Level", value=f"Level {boost_level}", inline=True)
-
-        # Verifizierungsstufe
-        verification_level = str(guild.verification_level).capitalize()
-        embed.add_field(name="Verifizierungsstufe", value=verification_level, inline=True)
-
-        # Region (optional)
-        if hasattr(guild, 'region'):
-            embed.add_field(name="Region", value=guild.region, inline=True)
-
-        # Footer
         embed.set_footer(text="Made with ♥️ by Atzen Development")
 
         await ctx.send(embed=embed)
 
-    except AttributeError as e:
-        error_embed = discord.Embed(
-            title="Fehler",
-            description="Beim Abrufen der Serverinformationen ist ein Attributfehler aufgetreten.",
-            color=discord.Color.red()
-        )
-        error_embed.add_field(name="Details", value=str(e))
-        await ctx.send(embed=error_embed)
-        print(f"Fehler beim Abrufen der Serverinformationen: {e}")
-
-    except discord.Forbidden:
-        error_embed = discord.Embed(
-            title="Fehler",
-            description="Ich habe nicht die Berechtigung, die Serverinformationen abzurufen.",
-            color=discord.Color.red()
-        )
-        await ctx.send(embed=error_embed)
-        print("Fehler: Berechtigungen fehlen.")
-
-    except discord.HTTPException as e:
-        error_embed = discord.Embed(
-            title="Fehler",
-            description="Ein HTTP-Fehler ist aufgetreten.",
-            color=discord.Color.red()
-        )
-        error_embed.add_field(name="Details", value=str(e))
-        await ctx.send(embed=error_embed)
-        print(f"HTTP-Fehler: {e}")
-
     except Exception as e:
         error_embed = discord.Embed(
             title="Fehler",
-            description="Ein unerwarteter Fehler ist aufgetreten.",
+            description=f"Beim Abrufen der Serverinformationen ist ein Fehler aufgetreten: {str(e)}",
             color=discord.Color.red()
         )
-        error_embed.add_field(name="Details", value=str(e))
         await ctx.send(embed=error_embed)
-        print(f"Unerwarteter Fehler: {e}")
+        print(f"Fehler beim Abrufen der Serverinformationen: {e}")
 
 
 
