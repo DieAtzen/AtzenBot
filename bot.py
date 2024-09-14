@@ -967,5 +967,24 @@ async def bibel(ctx):
     await ctx.send(embed=embed4)
     await ctx.send(embed=embed5)
 
+@bot.command(name='märchen')
+async def märchen(ctx):
+    embed = discord.Embed(
+        title="Das Märchen von Serveria",
+        description="Es war einmal, in einem weit entfernten Land namens Serveria, ein magisches Produkt namens Ayran, das von allen Bewohnern geliebt wurde. Ayran war nicht nur ein Getränk, sondern ein Symbol der Harmonie und der Freude. Seine Beliebtheit erstreckte sich über alle Grenzen und vereinte die Menschen durch seine erfrischende und köstliche Art.\n\n"
+                    "In Serveria lebten zwei tapfere Verteidiger des Ayrans: Spades und Desert. Spades war ein mutiger Ritter mit einer schimmernden Rüstung, die die Farben des Ayrans widerspiegelte. Desert war eine weise Zauberin mit der Fähigkeit, die Essenz des Ayrans zu kontrollieren und seine Kräfte zu verstärken. Gemeinsam sorgten sie dafür, dass Ayran immer frisch und verfügbar war, um den Durst und die Wünsche der Menschen zu stillen.\n\n"
+                    "Doch eines Tages tauchte ein finsterer Schatten auf. McNuggets, ein skrupelloser Widersacher, der aus einem fernen Land kam, stellte sich gegen das Ayran. McNuggets war ein mächtiger Zauberer, dessen Prinzipien sich gegen die kulturelle Aneignung wandten. Er behauptete, dass Ayran, obwohl es in Serveria so geschätzt wurde, gegen seine Grundsätze verstieß und die kulturelle Integrität gefährdete.\n\n"
+                    "McNuggets begann, in Serveria Unruhe zu stiften. Er verbreitete dunkle Gerüchte und machte den Bewohnern Angst, indem er behauptete, dass Ayran eine Gefahr für ihre Identität sei. Die Menschen waren verunsichert und fragten sich, ob McNuggets tatsächlich Recht hatte.\n\n"
+                    "Spades und Desert, entschlossen, das Ayran zu verteidigen, machten sich auf eine Reise, um die Wahrheit herauszufinden und McNuggets zu begegnen. Sie reisten durch magische Wälder, überquerten reißende Flüsse und bestiegen hohe Berge, um den Weg zu McNuggets' finsterem Schloss zu finden.\n\n"
+                    "Als sie schließlich ankamen, stellte sich McNuggets ihnen mit seinen düsteren Kräften entgegen. Er beschwor Stürme und dunkle Schatten, um die Verteidiger des Ayrans zu besiegen. Doch Spades zog sein Schwert, das im Licht des Ayrans glänzte, und Desert sprach mächtige Zauber, die die Dunkelheit zurückwiesen.\n\n"
+                    "Der Kampf war lang und hart, aber Spades und Desert kämpften tapfer und vereint. Schließlich, nach einer letzten, gewaltigen Anstrengung, gelang es ihnen, McNuggets zu besiegen. Der finstere Zauberer wurde in die Schatten verbannt, und der Frieden kehrte nach Serveria zurück.\n\n"
+                    "Die Menschen feierten die Rückkehr des Ayrans mit großer Freude. Spades und Desert wurden als Helden verehrt und ihre Tapferkeit wurde in Liedern und Geschichten besungen. Ayran blieb weiterhin das geschätzte Getränk, das alle vereinte und die Menschen an die Bedeutung von Zusammenhalt und Verständnis erinnerte.\n\n"
+                    "Und so lebten die Bewohner von Serveria glücklich und zufrieden, und das Ayran, ein Symbol für Harmonie, blieb für immer ein geliebtes Produkt in ihrem Land.",
+        color=discord.Color.green()
+    )
+    embed.set_footer(text="Made with ♥️ by Spades (oder so)")
+    await ctx.send(embed=embed)
+
+
 if __name__ == "__main__":
     bot.run(TOKEN)
