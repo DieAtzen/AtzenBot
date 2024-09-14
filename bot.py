@@ -21,6 +21,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+import discord
+from discord.ext import commands
 
 bot.remove_command('help')
 
@@ -149,7 +151,7 @@ async def poll(ctx, mode: str, duration: int, *, content: str):
         await ctx.send(embed=embed)
         return
 
-    if duration > 1440:  # 24 Stunden
+    if duration > 1440:  
         embed = discord.Embed(
             title="Fehler",
             description="**Dauer zu lang**\nDie maximale Dauer einer Umfrage beträgt 24 Stunden (1440 Minuten).",
@@ -937,8 +939,6 @@ async def serverinfo(ctx):
         print(f"Fehler beim Abrufen der Serverinformationen: {e}")
 
 
-
-
 @bot.command()
 async def bibel(ctx):
 
@@ -1019,6 +1019,210 @@ async def märchen(ctx):
     )
     await ctx.send(embed=embed)
 
+
+
+
+LOG_CHANNEL_ID = 1284652741058232453
+
+def truncate_field_value(value, max_length=1024):
+    if len(value) > max_length:
+        return value[:max_length - 3] + '...'  
+    return value
+
+async def log_to_channel(bot, embed):
+    try:
+        log_channel = bot.get_channel(LOG_CHANNEL_ID)
+        if log_channel:
+            await log_channel.send(embed=embed)
+        else:
+            print(f"Log channel with ID {LOG_CHANNEL_ID} not found.")
+    except Exception as e:
+        print(f"An error occurred while sending the log message: {e}")
+
+@bot.event
+async def on_guild_role_create(role):
+    embed = discord.Embed(
+        title="Role Created",
+        description=f"A new role has been created: {role.mention}",
+        color=discord.Color.green()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_guild_role_delete(role):
+    embed = discord.Embed(
+        title="Role Deleted",
+        description=f"A role has been deleted: {role.mention}",
+        color=discord.Color.red()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_member_update(before, after):
+    added_roles = [role.mention for role in set(after.roles) - set(before.roles)]
+    removed_roles = [role.mention for role in set(before.roles) - set(after.roles)]
+
+    if added_roles or removed_roles:
+        embed = discord.Embed(
+            title="Roles Updated",
+            description=f"Roles for {after.mention} have been updated.",
+            color=discord.Color.blue()
+        )
+        if added_roles:
+            embed.add_field(name="Roles Added", value=truncate_field_value(", ".join(added_roles)), inline=False)
+        if removed_roles:
+            embed.add_field(name="Roles Removed", value=truncate_field_value(", ".join(removed_roles)), inline=False)
+        await log_to_channel(bot, embed)
+
+@bot.event
+async def on_guild_role_update(before, after):
+    embed = discord.Embed(
+        title="Role Updated",
+        description=f"The role {after.mention} has been updated.",
+        color=discord.Color.orange()
+    )
+    
+    if before.name != after.name:
+        name_change = f"From `{before.name}` to `{after.name}`"
+        embed.add_field(name="Name Changed", value=truncate_field_value(name_change), inline=False)
+    
+    if before.permissions != after.permissions:
+        permissions_change = f"Before: {format_permissions(before.permissions)}\nAfter: {format_permissions(after.permissions)}"
+        embed.add_field(name="Permissions Changed", value=truncate_field_value(permissions_change), inline=False)
+    
+    await log_to_channel(bot, embed)
+
+def format_permissions(permissions):
+    formatted = []
+    for perm in permissions:
+        formatted.append(f"{perm}: {'Yes' if permissions[perm] else 'No'}")
+    return "\n".join(formatted[:10])  
+
+@bot.event
+async def on_member_join(member):
+    embed = discord.Embed(
+        title="Member Joined",
+        description=f"{member.mention} has joined the server.",
+        color=discord.Color.blue()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_member_remove(member):
+    embed = discord.Embed(
+        title="Member Left",
+        description=f"{member.mention} has left the server.",
+        color=discord.Color.red()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_member_update(before, after):
+    embed = discord.Embed(
+        title="Member Updated",
+        description=f"The member {after.mention} has been updated.",
+        color=discord.Color.orange()
+    )
+    if before.nick != after.nick:
+        embed.add_field(name="Nickname Changed", value=f"From `{before.nick}` to `{after.nick}`", inline=False)
+    if before.roles != after.roles:
+        added_roles = [role.mention for role in set(after.roles) - set(before.roles)]
+        removed_roles = [role.mention for role in set(before.roles) - set(after.roles)]
+        if added_roles:
+            embed.add_field(name="Roles Added", value=truncate_field_value(", ".join(added_roles)), inline=False)
+        if removed_roles:
+            embed.add_field(name="Roles Removed", value=truncate_field_value(", ".join(removed_roles)), inline=False)
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_guild_update(before, after):
+    embed = discord.Embed(
+        title="Server Updated",
+        description=f"The server `{before.name}` has been updated.",
+        color=discord.Color.orange()
+    )
+    if before.name != after.name:
+        embed.add_field(name="Server Name Changed", value=f"From `{before.name}` to `{after.name}`", inline=False)
+    if before.icon != after.icon:
+        embed.add_field(name="Server Icon Changed", value="The server icon has been updated.", inline=False)
+        embed.set_thumbnail(url=after.icon_url)
+    if before.region != after.region:
+        embed.add_field(name="Server Region Changed", value=f"From `{before.region}` to `{after.region}`", inline=False)
+    if before.premium_subscription_count < after.premium_subscription_count:
+        embed.add_field(name="Server Boost Added", value=f"The server now has {after.premium_subscription_count} boosts.", inline=False)
+    if before.premium_tier != after.premium_tier:
+        embed.add_field(name="Boost Level Changed", value=f"From `{before.premium_tier}` to `{after.premium_tier}`", inline=False)
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_command(ctx):
+    embed = discord.Embed(
+        title="Command Executed",
+        description=f"The command `{ctx.command}` was used by {ctx.author.mention}.",
+        color=discord.Color.blue()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_message_edit(before, after):
+    embed = discord.Embed(
+        title="Message Edited",
+        description=f"A message from {after.author.mention} was edited.\n\nBefore: {truncate_field_value(before.content)}\nAfter: {truncate_field_value(after.content)}",
+        color=discord.Color.orange()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_message_delete(message):
+    embed = discord.Embed(
+        title="Message Deleted",
+        description=f"A message from {message.author.mention} was deleted.\nContent: {truncate_field_value(message.content)}",
+        color=discord.Color.red()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    if user.bot:
+        return
+    embed = discord.Embed(
+        title="Reaction Added",
+        description=f"{user.mention} reacted to a message with {reaction.emoji}.",
+        color=discord.Color.blue()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_reaction_remove(reaction, user):
+    if user.bot:
+        return
+    embed = discord.Embed(
+        title="Reaction Removed",
+        description=f"{user.mention} removed a reaction: {reaction.emoji}.",
+        color=discord.Color.purple()
+    )
+    await log_to_channel(bot, embed)
+
+@bot.event
+async def on_guild_emojis_update(before, after):
+    added = [e for e in after if e not in before]
+    removed = [e for e in before if e not in after]
+    
+    if added:
+        embed = discord.Embed(
+            title="Emojis Added",
+            description="The following emojis have been added:\n" + "\n".join(f"{e.name} ({e})" for e in added),
+            color=discord.Color.green()
+        )
+        await log_to_channel(bot, embed)
+    
+    if removed:
+        embed = discord.Embed(
+            title="Emojis Removed",
+            description="The following emojis have been removed:\n" + "\n".join(f"{e.name} ({e})" for e in removed),
+            color=discord.Color.red()
+        )
+        await log_to_channel(bot, embed)
 
 
 if __name__ == "__main__":
