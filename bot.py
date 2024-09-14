@@ -22,33 +22,43 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
-@bot.command()
-async def command(ctx):
+@bot.command(name='help')
+async def help_command(ctx):
+    
     embed = discord.Embed(
-        title="Bot Befehle",
-        description="Hier ist eine Liste aller verfügbaren Befehle.",
+        title="Hilfe",
+        description="Hier ist eine Übersicht der verfügbaren Befehle.",
         color=discord.Color.blue()
     )
+
     
-    
-    embed.add_field(name="!ban", value="Bannt einen Benutzer und sendet eine DM mit dem Grund.", inline=False)
-    embed.add_field(name="!unban", value="Hebt das Verbot eines Benutzers auf.", inline=False)
-    embed.add_field(name="!mute", value="Stummstellt einen Benutzer.", inline=False)
-    embed.add_field(name="!unmute", value="Entmuttet einen Benutzer.", inline=False)
-    embed.add_field(name="!warn", value="warnt einen User", inline=False)
-    embed.add_field(name="!unwarn", value="unwarnt einen User", inline=False)
-    embed.add_field(name="!cases", value="Zeigt die Cases eines Users an", inline=False)
-    embed.add_field(name="!muteconfig", value="Setzt die Berechtigungen für die Mute-Rolle in allen Textkanälen.", inline=False)
-    embed.add_field(name="!purge", value="Löscht Nachrichten in einem Kanal", inline=False)
-    embed.add_field(name="!bibel", value="Schickt die Bibel des heiligen Reddington", inline=False)
-    embed.add_field(name="**/**embed", value="Schickt eine Nachricht in einem Embed", inline=False)
+    commands_list = {
+        'warn': 'Warnt ein Mitglied des Servers. Beispiel: `!warn @Benutzer Grund`.',
+        'unwarn': 'Hebt eine Warnung für ein Mitglied auf. Beispiel: `!unwarn @Benutzer Grund`.',
+        'cases': 'Zeigt alle offenen Warnungen und Fälle für einen Benutzer an. Beispiel: `!cases @Benutzer`.',
+        'mute': 'Stummschaltet ein Mitglied für eine bestimmte Dauer. Beispiel: `!mute @Benutzer 10m Grund`.',
+        'ban': 'Bann ein Mitglied vom Server. Beispiel: `!ban @Benutzer Grund`.',
+        'unban': 'Hebt den Bann eines Mitglieds auf. Beispiel: `!unban BenutzerID Grund`.',
+        'purge': 'Löscht eine bestimmte Anzahl von Nachrichten in einem Kanal. Beispiel: `!purge 10`.',
+        'embed': 'Sendet eine benutzerdefinierte Embed-Nachricht. Beispiel: `!embed Titel | Beschreibung`.',
+        'poll': 'Startet eine Umfrage. Beispiel: `!poll single 10 Frage | Option1, Option2`.',
+    }
+
+    for command, description in commands_list.items():
+        embed.add_field(name=f'!{command}', value=description, inline=False)
+
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
 
     await ctx.send(embed=embed)
+
+
+bot.remove_command('help')
+
 
 @bot.event
 async def on_ready():
     print(f'Bot ist eingeloggt als {bot.user.name}')
-    await bot.change_presence(activity=discord.Game(name='!command für Hilfe'))
+    await bot.change_presence(activity=discord.Game(name='!help für Hilfe'))
 
 
 @bot.command(name='poll')
@@ -167,8 +177,8 @@ async def poll(ctx, mode: str, duration: int, *, content: str):
     for i in range(len(options)):
         await message.add_reaction(chr(127462 + i))
 
-    # Nach der angegebenen Dauer die Umfrage beenden
-    await asyncio.sleep(duration * 60)  # Dauer in Minuten umwandeln
+    
+    await asyncio.sleep(duration * 60)  
 
     
     results = await message.channel.fetch_message(message.id)
@@ -208,7 +218,7 @@ async def embed(interaction: discord.Interaction, title: str, description: str, 
         # Hex zu Integer
         color_int = int(color.replace('#', ''), 16)
     except ValueError:
-        # Fehlerbehandlung, wenn die Farbe nicht im richtigen Format ist
+        
         embed = discord.Embed(
             title="Fehler",
             description="Die Farbe muss im Hex-Format (#RRGGBB) angegeben werden.",
