@@ -970,7 +970,7 @@ async def bibel(ctx):
 @bot.command(name='märchen')
 async def märchen(ctx):
     embed = discord.Embed(
-        title="Das Märchen von Serveria",
+        title="Das Märchen von dem Ayran",
         description="Es war einmal, in einem weit entfernten Land namens Serveria, ein magisches Produkt namens Ayran, das von allen Bewohnern geliebt wurde. Ayran war nicht nur ein Getränk, sondern ein Symbol der Harmonie und der Freude. Seine Beliebtheit erstreckte sich über alle Grenzen und vereinte die Menschen durch seine erfrischende und köstliche Art.\n\n"
                     "In Serveria lebten zwei tapfere Verteidiger des Ayrans: Spades und Desert. Spades war ein mutiger Ritter mit einer schimmernden Rüstung, die die Farben des Ayrans widerspiegelte. Desert war eine weise Zauberin mit der Fähigkeit, die Essenz des Ayrans zu kontrollieren und seine Kräfte zu verstärken. Gemeinsam sorgten sie dafür, dass Ayran immer frisch und verfügbar war, um den Durst und die Wünsche der Menschen zu stillen.\n\n"
                     "Doch eines Tages tauchte ein finsterer Schatten auf. McNuggets, ein skrupelloser Widersacher, der aus einem fernen Land kam, stellte sich gegen das Ayran. McNuggets war ein mächtiger Zauberer, dessen Prinzipien sich gegen die kulturelle Aneignung wandten. Er behauptete, dass Ayran, obwohl es in Serveria so geschätzt wurde, gegen seine Grundsätze verstieß und die kulturelle Integrität gefährdete.\n\n"
