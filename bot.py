@@ -50,6 +50,158 @@ async def on_ready():
     print(f'Bot ist eingeloggt als {bot.user.name}')
     await bot.change_presence(activity=discord.Game(name='!command für Hilfe'))
 
+
+@bot.command(name='poll')
+@commands.has_permissions(manage_roles=True)  
+async def poll(ctx, mode: str, duration: int, *, content: str):
+    
+    if mode.lower() not in ['single', 'multi']:
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Ungültiger Modus**\nBitte gib einen gültigen Modus an: `single` oder `multi`.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+    
+    
+    parts = content.split('|', 1)
+    if len(parts) < 2:
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Unvollständiger Inhalt**\nDu musst eine Frage und mindestens zwei Antwortoptionen angeben. Benutze das Format: `!poll Modus Dauer Frage | Option1, Option2, Option3`.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+
+    question = parts[0].strip()
+    options = [option.strip() for option in parts[1].split(',')]
+
+    if len(question) < 5:
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Frage zu kurz**\nDie Frage muss mindestens 5 Zeichen lang sein.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+
+    if len(options) < 2:
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Nicht genügend Optionen**\nDu musst mindestens zwei Antwortoptionen angeben.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+
+    if len(options) > 10:
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Zu viele Optionen**\nDu kannst maximal 10 Antwortoptionen angeben.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+
+    if len(question) > 200:
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Frage zu lang**\nDie Frage darf nicht länger als 200 Zeichen sein.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+
+    if any(len(option) > 100 for option in options):
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Optionen zu lang**\nJede Antwortoption darf nicht länger als 100 Zeichen sein.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+
+    if duration <= 0:
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Ungültige Dauer**\nDie Dauer muss eine positive Ganzzahl in Minuten sein.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+
+    if duration > 1440:  # 24 Stunden
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Dauer zu lang**\nDie maximale Dauer einer Umfrage beträgt 24 Stunden (1440 Minuten).",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+        return
+
+    
+    embed = discord.Embed(
+        title="Umfrage",
+        description=f"**Frage:** {question}\n" + "\n".join([f"{chr(127462 + i)} {option}" for i, option in enumerate(options)]),
+        color=discord.Color.blue()
+    )
+    embed.add_field(name="Modus", value=mode.capitalize(), inline=False)
+    embed.add_field(name="Dauer", value=f"{duration} Minuten", inline=False)
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
+
+    
+    message = await ctx.send(embed=embed)
+
+    
+    for i in range(len(options)):
+        await message.add_reaction(chr(127462 + i))
+
+    # Nach der angegebenen Dauer die Umfrage beenden
+    await asyncio.sleep(duration * 60)  # Dauer in Minuten umwandeln
+
+    
+    results = await message.channel.fetch_message(message.id)
+    results_embed = discord.Embed(
+        title="Umfrage beendet",
+        description=f"**Frage:** {question}\n\n" + "\n".join([f"{chr(127462 + i)} {options[i]}: {results.reactions[i].count - 1}" for i in range(len(options))]),
+        color=discord.Color.green()
+    )
+    results_embed.add_field(name="Modus", value=mode.capitalize(), inline=False)
+    results_embed.add_field(name="Dauer", value=f"{duration} Minuten", inline=False)
+    results_embed.set_footer(text="Made with ♥️ by Atzen Development")
+    await ctx.send(embed=results_embed)
+
+@poll.error
+async def poll_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        embed = discord.Embed(
+            title="Fehler",
+            description="**Fehlende Berechtigungen**\nDu hast nicht die erforderlichen Berechtigungen, um diesen Befehl auszuführen. Du benötigst die Berechtigung 'Rollen verwalten'.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"**Unerwarteter Fehler**\nEin unerwarteter Fehler ist aufgetreten: {error}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+
+
 @bot.tree.command(name="embed", description="Sendet eine Embed-Nachricht")
 async def embed(interaction: discord.Interaction, title: str, description: str, color: str):
     try:
