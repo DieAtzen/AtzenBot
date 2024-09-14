@@ -474,7 +474,6 @@ async def cases(ctx, member: discord.Member):
             color=discord.Color.blue()
         )
         
-        
         embed.set_thumbnail(url=member.avatar.url)
 
         # die warns
@@ -482,9 +481,20 @@ async def cases(ctx, member: discord.Member):
             for i, warn in enumerate(warns, 1):
                 if isinstance(warn, dict):
                     reason = warn.get('reason', 'Keine Angabe')
-                    author = bot.get_user(warn.get('author')) or "Unbekannt"
+                    author_id = warn.get('author')
+                    
+                    # Prüfen, ob author_id gültig ist
+                    if author_id:
+                        try:
+                            author = await bot.fetch_user(author_id)
+                            author_mention = author.mention
+                        except discord.NotFound:
+                            author_mention = "Unbekannt"
+                    else:
+                        author_mention = "Unbekannt"
+
                     archived = "Archiviert" if warn.get('archived') else "Offen"
-                    embed.add_field(name=f"Warnung {i}", value=f"Grund: {reason}\nAutor: {author}\nStatus: {archived}", inline=False)
+                    embed.add_field(name=f"Warnung {i}", value=f"Grund: {reason}\nAutor: {author_mention}\nStatus: {archived}", inline=False)
                 else:
                     embed.add_field(name=f"Warnung {i}", value=f"Grund: {warn}", inline=False)
         else:
@@ -498,6 +508,8 @@ async def cases(ctx, member: discord.Member):
     except Exception as e:
         await ctx.send(f"Beim Ausführen des Cases-Befehls ist ein Fehler aufgetreten: {str(e)}")
         print(f"Fehler beim Ausführen des Cases-Befehls: {e}")
+
+
 
 
 
