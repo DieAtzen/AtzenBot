@@ -52,9 +52,20 @@ async def on_ready():
 
 @bot.tree.command(name="embed", description="Sendet eine Embed-Nachricht")
 async def embed(interaction: discord.Interaction, title: str, description: str, color: str):
-    # Hex zu Integer
-    color_int = int(color.replace('#', ''), 16)
-    
+    try:
+        # Hex zu Integer
+        color_int = int(color.replace('#', ''), 16)
+    except ValueError:
+        # Fehlerbehandlung, wenn die Farbe nicht im richtigen Format ist
+        embed = discord.Embed(
+            title="Fehler",
+            description="Die Farbe muss im Hex-Format (#RRGGBB) angegeben werden.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        return
+
     embed = discord.Embed(
         title=title,
         description=description,
@@ -62,6 +73,7 @@ async def embed(interaction: discord.Interaction, title: str, description: str, 
     )
     await interaction.response.send_message(embed=embed)
     await interaction.message.delete()
+
 
 @bot.command(name='purge')
 @commands.has_permissions(manage_messages=True)
@@ -332,13 +344,25 @@ async def cases(ctx, member: discord.Member):
 @bot.command()
 async def embed(ctx, *, content: str = None):
     if content is None:
-        await ctx.send("Fehler: Du musst einen Titel und eine Beschreibung angeben. Benutze das Format: `!embed Titel | Beschreibung`.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Du musst einen Titel und eine Beschreibung angeben. Benutze das Format: `!embed Titel | Beschreibung`.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
         return
     
     try:
         title, description = content.split("|", 1)
     except ValueError:
-        await ctx.send("Fehler: Du hast das falsche Format verwendet. Benutze das Format: `!embed Titel | Beschreibung`.")
+        embed = discord.Embed(
+            title="Fehler",
+            description="Du hast das falsche Format verwendet. Benutze das Format: `!embed Titel | Beschreibung`.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
         return
 
     embed = discord.Embed(
@@ -349,6 +373,7 @@ async def embed(ctx, *, content: str = None):
 
     await ctx.send(embed=embed)
     await ctx.message.delete()
+
 
 
 
