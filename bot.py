@@ -1,9 +1,10 @@
+import json
 import discord
 import asyncio
 from discord.ext import commands
 
 # Config
-TOKEN = "" # Token Einfügen
+TOKEN = ""
 MUTE_ROLE_ID = 1284531978284171275
 LOG_CHANNEL_ID = 1269261771953147925
 ALLOWED_ROLE_IDS = [
@@ -75,6 +76,198 @@ async def github(ctx):
     github_url = "https://github.com/DieAtzen/AtzenBot/"
     await ctx.send(f"Hier ist der Link zu unserem GitHub-Repository: {github_url}")
     await ctx.author.send(f"Hier ist der Link zu unserem GitHub-Repository: {github_url}")
+
+warns = {}
+archived_warns = {}
+
+print("Lade Daten...")
+
+def load_data():
+    try:
+        with open('data.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {'warns': {}}
+    except json.JSONDecodeError:
+        print("Fehler beim Lesen der JSON-Datei")
+        return {'warns': {}}
+
+def save_data(data):
+    with open('data.json', 'w') as f:
+        json.dump(data, f, indent=4)
+
+data = load_data()
+
+print("Daten geladen:", data)
+
+@bot.command(name='warn')
+async def warn(ctx, member: discord.Member, *, reason: str):
+    try:
+        user_id = str(member.id)
+        if user_id not in data['warns']:
+            data['warns'][user_id] = []
+
+        
+        data['warns'][user_id].append({
+            'reason': reason,
+            'author': ctx.author.id,
+            'archived': False
+        })
+        save_data(data)
+
+        
+        embed = discord.Embed(
+            title=f"Warnung für {member}",
+            description=f"Grund: {reason}",
+            color=discord.Color.red()
+        )
+        
+        
+        embed.set_thumbnail(url=member.avatar.url)
+        
+        
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+
+        log_channel = bot.get_channel(1269261771953147925)
+        await log_channel.send(embed=embed)
+
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        await ctx.send(f"Beim Ausführen des Warnbefehls ist ein Fehler aufgetreten: {str(e)}")
+        print(f"Fehler beim Ausführen des Warnbefehls: {e}")
+
+
+def validate_warns(data):
+    if 'warns' not in data:
+        data['warns'] = {}
+    for user_id, warns in data['warns'].items():
+        if not isinstance(warns, list):
+            data['warns'][user_id] = []
+        for i, warn in enumerate(warns):
+            if not isinstance(warn, dict):
+                data['warns'][user_id][i] = {'reason': 'Unknown', 'author': None, 'archived': False}
+            else:
+                if 'reason' not in warn:
+                    warn['reason'] = 'Unknown'
+                if 'author' not in warn:
+                    warn['author'] = None
+                if 'archived' not in warn:
+                    warn['archived'] = False
+
+def save_data(data):
+    with open('data.json', 'w') as file:
+        json.dump(data, file, indent=4)
+
+def load_data():
+    try:
+        with open('data.json', 'r') as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        data = {'warns': {}, 'archived_warns': {}}
+    return data
+
+def validate_warns(data):
+    if 'warns' not in data:
+        data['warns'] = {}
+    for user_id, warns in data['warns'].items():
+        if not isinstance(warns, list):
+            data['warns'][user_id] = []
+        for i, warn in enumerate(warns):
+            if not isinstance(warn, dict):
+                data['warns'][user_id][i] = {'reason': 'Unknown', 'author': None, 'archived': False}
+            else:
+                if 'reason' not in warn:
+                    warn['reason'] = 'Unknown'
+                if 'author' not in warn:
+                    warn['author'] = None
+                if 'archived' not in warn:
+                    warn['archived'] = False
+
+data = load_data()
+validate_warns(data)
+
+@bot.command(name='unwarn')
+async def unwarn(ctx, member: discord.Member, *, reason: str):
+    try:
+        user_id = str(member.id)
+        if user_id in data['warns']:
+            warns = data['warns'][user_id]
+            
+            for warn in warns:
+                if isinstance(warn, dict) and warn.get('reason') == reason:
+                    warns.remove(warn)
+                    if not warns:
+                        del data['warns'][user_id]
+                    save_data(data)
+
+                    
+                    embed = discord.Embed(
+                        title=f"Warnung für {member}",
+                        description=f"Grund: {reason} wurde aufgehoben",
+                        color=discord.Color.green()
+                    )
+                    
+                    
+                    embed.set_thumbnail(url=member.avatar.url)
+                    
+                    
+                    embed.set_footer(text="Made with ♥️ by Atzen Development")
+
+                    log_channel = bot.get_channel(1269261771953147925)
+                    await log_channel.send(embed=embed)
+
+                    await ctx.send(embed=embed)
+                    return
+            
+            await ctx.send(f"{member.mention} hat keine Warnung mit dem Grund '{reason}'.")
+
+        else:
+            await ctx.send(f"{member.mention} hat keine Warnungen.")
+
+    except Exception as e:
+        await ctx.send(f"Beim Ausführen des Unwarnbefehls ist ein Fehler aufgetreten: {str(e)}")
+        print(f"Fehler beim Ausführen des Unwarnbefehls: {e}")
+
+
+
+
+
+@bot.command(name='cases')
+async def cases(ctx, member: discord.Member):
+    try:
+        user_id = str(member.id)
+        warns = data['warns'].get(user_id, [])
+        embed = discord.Embed(
+            title=f"Warnungen für {member}",
+            color=discord.Color.blue()
+        )
+        
+        
+        embed.set_thumbnail(url=member.avatar.url)
+
+        # die warns
+        if warns:
+            for i, warn in enumerate(warns, 1):
+                if isinstance(warn, dict):
+                    reason = warn.get('reason', 'Keine Angabe')
+                    author = bot.get_user(warn.get('author')) or "Unbekannt"
+                    archived = "Archiviert" if warn.get('archived') else "Offen"
+                    embed.add_field(name=f"Warnung {i}", value=f"Grund: {reason}\nAutor: {author}\nStatus: {archived}", inline=False)
+                else:
+                    embed.add_field(name=f"Warnung {i}", value=f"Grund: {warn}", inline=False)
+        else:
+            embed.add_field(name="Keine Warnungen", value=f"{member.mention} hat keine Warnungen.", inline=False)
+
+        # unser geiler footer
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        await ctx.send(f"Beim Ausführen des Cases-Befehls ist ein Fehler aufgetreten: {str(e)}")
+        print(f"Fehler beim Ausführen des Cases-Befehls: {e}")
+
 
 
 
@@ -408,5 +601,5 @@ async def bibel(ctx):
     await ctx.send(embed=embed4)
     await ctx.send(embed=embed5)
 
-
-bot.run(TOKEN)
+if __name__ == "__main__":
+    bot.run(TOKEN)
