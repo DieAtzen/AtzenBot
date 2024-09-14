@@ -934,10 +934,6 @@ async def serverinfo(ctx):
         channel_count = len(guild.channels)
         embed.add_field(name="Kanalanzahl", value=str(channel_count), inline=True)
 
-        # Region
-        region = str(guild.region).capitalize()
-        embed.add_field(name="Region", value=region, inline=True)
-
         # Boost-Level
         boost_level = guild.premium_tier
         embed.add_field(name="Boost-Level", value=f"Level {boost_level}", inline=True)
@@ -945,6 +941,10 @@ async def serverinfo(ctx):
         # Verifizierungsstufe
         verification_level = str(guild.verification_level).capitalize()
         embed.add_field(name="Verifizierungsstufe", value=verification_level, inline=True)
+
+        # Region (optional)
+        if hasattr(guild, 'region'):
+            embed.add_field(name="Region", value=guild.region, inline=True)
 
         # Footer
         embed.set_footer(text="Made with ♥️ by Atzen Development")
@@ -989,6 +989,7 @@ async def serverinfo(ctx):
         error_embed.add_field(name="Details", value=str(e))
         await ctx.send(embed=error_embed)
         print(f"Unerwarteter Fehler: {e}")
+
 
 
 
