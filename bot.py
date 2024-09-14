@@ -3,7 +3,7 @@ import asyncio
 from discord.ext import commands
 
 # Config
-TOKEN = ""
+TOKEN = "" # Token Einfügen
 MUTE_ROLE_ID = 1284531978284171275
 LOG_CHANNEL_ID = 1269261771953147925
 ALLOWED_ROLE_IDS = [
@@ -69,6 +69,14 @@ async def prefix_purge(ctx, amount: int):
     await ctx.send(f"Lösche {amount} Nachrichten...")
     await ctx.channel.purge(limit=amount)
     await ctx.send(f"{amount} Nachrichten wurden gelöscht.")
+
+@bot.command(name='github')
+async def github(ctx):
+    github_url = "https://github.com/DieAtzen/AtzenBot/"
+    await ctx.send(f"Hier ist der Link zu unserem GitHub-Repository: {github_url}")
+    await ctx.author.send(f"Hier ist der Link zu unserem GitHub-Repository: {github_url}")
+
+
 
 @bot.command()
 async def embed(ctx, *, content: str = None):
