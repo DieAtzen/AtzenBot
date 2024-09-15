@@ -5,6 +5,7 @@ import discord
 import asyncio
 import random
 import logging
+from flask import Flask, request, jsonify
 from datetime import datetime
 from discord.ext import commands
 from discord import app_commands
@@ -37,6 +38,20 @@ intents.guilds = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)  
 
+
+app = Flask(__name__)
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    content = request.json.get('content')
+    channel_id = request.json.get('channel_id')
+    channel = bot.get_channel(int(channel_id))
+    bot.loop.create_task(channel.send(content))
+    return jsonify({'status': 'Message sent'})
 
 bot.remove_command('help')
 
