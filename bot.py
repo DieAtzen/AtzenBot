@@ -5,6 +5,7 @@ import random
 import logging
 from datetime import datetime
 from discord.ext import commands
+from discord import app_commands
 
 # Config
 TOKEN = ""
@@ -91,6 +92,8 @@ async def help_command(ctx):
 async def on_ready():
     print(f'Bot ist eingeloggt als {bot.user.name}')
     await bot.change_presence(activity=discord.Game(name='!help für Hilfe'))
+    await bot.tree.sync()
+    print("Slash-Commands wurden synchronisiert.")
 
 
 async def get_audit_log_entry(guild, action, target=None):
@@ -117,6 +120,106 @@ async def send_message(channel, content):
 
 
 
+@bot.event
+async def on_ready():
+    print(f'Bot ist eingeloggt als {bot.user}')
+    
+    for guild in bot.guilds:
+        for command in bot.tree.get_commands():
+            try:
+                await bot.tree.delete_command(command.name, guild=guild)
+            except Exception as e:
+                print(f"Fehler beim Löschen des Commands: {e}")
+    
+    
+    await bot.tree.sync()
+    print("Slash-Commands wurden synchronisiert.")
+
+@bot.tree.command(name="roleadd", description="Fügt einem Mitglied eine bestimmte Rolle hinzu.")
+@app_commands.describe(member="Das Mitglied, dem die Rolle hinzugefügt werden soll.", role="Die Rolle, die hinzugefügt werden soll.")
+async def roleadd(interaction: discord.Interaction, member: discord.Member, role: discord.Role):
+    if role not in interaction.guild.roles:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Die Rolle `{role.name}` existiert nicht auf diesem Server.",
+            color=discord.Color.red()
+        )
+        await interaction.response.send_message(embed=embed)
+        return
+
+    if role in member.roles:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"{member.mention} hat bereits die Rolle `{role.name}`.",
+            color=discord.Color.red()
+        )
+        await interaction.response.send_message(embed=embed)
+        return
+
+    try:
+        await member.add_roles(role)
+        embed = discord.Embed(
+            title="Rolle hinzugefügt",
+            description=f"Die Rolle `{role.name}` wurde erfolgreich zu {member.mention} hinzugefügt.",
+            color=discord.Color.green()
+        )
+    except discord.Forbidden:
+        embed = discord.Embed(
+            title="Fehler",
+            description="Ich habe keine Berechtigung, um diese Rolle hinzuzufügen. Stelle sicher, dass meine Rolle höher ist als die zugewiesene Rolle und dass ich über die Berechtigung verfüge, Rollen zu verwalten.",
+            color=discord.Color.red()
+        )
+    except Exception as e:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Es ist ein Fehler aufgetreten: {str(e)}",
+            color=discord.Color.red()
+        )
+
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="roleremove", description="Entfernt eine bestimmte Rolle von einem Mitglied.")
+@app_commands.describe(member="Das Mitglied, von dem die Rolle entfernt werden soll.", role="Die Rolle, die entfernt werden soll.")
+async def roleremove(interaction: discord.Interaction, member: discord.Member, role: discord.Role):
+    if role not in interaction.guild.roles:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Die Rolle `{role.name}` existiert nicht auf diesem Server.",
+            color=discord.Color.red()
+        )
+        await interaction.response.send_message(embed=embed)
+        return
+
+    if role not in member.roles:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"{member.mention} hat die Rolle `{role.name}` nicht.",
+            color=discord.Color.red()
+        )
+        await interaction.response.send_message(embed=embed)
+        return
+
+    try:
+        await member.remove_roles(role)
+        embed = discord.Embed(
+            title="Rolle entfernt",
+            description=f"Die Rolle `{role.name}` wurde erfolgreich von {member.mention} entfernt.",
+            color=discord.Color.green()
+        )
+    except discord.Forbidden:
+        embed = discord.Embed(
+            title="Fehler",
+            description="Ich habe keine Berechtigung, um diese Rolle zu entfernen. Stelle sicher, dass meine Rolle höher ist als die zu entfernende Rolle und dass ich über die Berechtigung verfüge, Rollen zu verwalten.",
+            color=discord.Color.red()
+        )
+    except Exception as e:
+        embed = discord.Embed(
+            title="Fehler",
+            description=f"Es ist ein Fehler aufgetreten: {str(e)}",
+            color=discord.Color.red()
+        )
+
+    await interaction.response.send_message(embed=embed)
 
 COINS_FILE = 'coins.json'
 USER_DATA_FILE = 'user_data.json'
