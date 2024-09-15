@@ -8,5 +8,7 @@ Der "Die Atzen" Discord Bot. Dieser wird sämtliche wichtigen funktionen, welche
 - Umfragen
 - Logging
 - Benutzerdefiniertes
+- Roulette
+- Blackjack
 
                                                    Und vieles Mehr!
