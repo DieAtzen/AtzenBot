@@ -223,6 +223,44 @@ async def poll(ctx, mode: str, duration: int, *, content: str):
     results_embed.set_footer(text="Made with ♥️ by Atzen Development")
     await ctx.send(embed=results_embed)
 
+@bot.command(name='github')
+async def github(ctx):
+    try:
+        github_link = "https://github.com/DieAtzen/AtzenBot"
+        
+        
+        embed = discord.Embed(
+            title="AtzenBot GitHub Repository",
+            description=f"Hier ist der Link zu unserem GitHub-Repository: [AtzenBot GitHub]({github_link})",
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        
+        
+        await ctx.send(embed=embed)
+        
+        
+        await ctx.send(github_link)
+        
+        
+        try:
+            dm_channel = await ctx.author.create_dm()
+            await dm_channel.send(embed=embed)
+            await dm_channel.send(github_link)
+        except discord.Forbidden:
+            await ctx.send("Ich kann dir keine DM senden. Stelle sicher, dass du DMs von Mitgliedern dieses Servers erlaubst.")
+        
+    except Exception as e:
+        embed = discord.Embed(
+            title="Fehler beim Abrufen des GitHub-Links",
+            description=f"Beim Ausführen des GitHub-Befehls ist ein Fehler aufgetreten: {str(e)}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Bitte versuche es später erneut.")
+        await ctx.send(embed=embed)
+        print(f"Fehler beim Ausführen des GitHub-Befehls: {e}")
+
+
 @poll.error
 async def poll_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
