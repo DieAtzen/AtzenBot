@@ -2203,8 +2203,5 @@ async def zitat(ctx):
     await ctx.send(embed=embed)
 
 
-bot.run('DEIN_BOT_TOKEN')
-
-
 if __name__ == "__main__":
     bot.run(TOKEN)
