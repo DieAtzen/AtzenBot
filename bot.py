@@ -737,8 +737,7 @@ async def github(ctx):
         
         embed = discord.Embed(
             title="AtzenBot GitHub Repository",
-            description=f"Hier ist der Link zu unserem GitHub-Repository: [AtzenBot GitHub]({github_link}) \n
-            Außerdem haben wir hier auch noch einen schnellen Link zu unserem neustem Release: https://github.com/DieAtzen/AtzenBot/releases/tag/Public",
+            description=f"Hier ist der Link zu unserem GitHub-Repository: [AtzenBot GitHub]({github_link})",
             color=discord.Color.blue()
         )
         embed.set_footer(text="Made with ♥️ by Atzen Development")
