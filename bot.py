@@ -27,6 +27,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 intents = discord.Intents.default()
+client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
 intents.message_content = True
 intents.members = True
 intents.messages = True
@@ -178,15 +180,12 @@ async def help_command(ctx):
 
 is_ready = False
 
-@bot.event
+@client.event
 async def on_ready():
-    global is_ready
-    if not is_ready:
-        print(f'Bot ist eingeloggt als {bot.user.name}')
-        await bot.tree.sync()
-        print("Slash-Commands wurden synchronisiert.")
-        await bot.change_presence(activity=discord.Game(name='!help für Hilfe'))
-        is_ready = True
+    await tree.sync(guild=discord.Object(id=876464048537993277))
+    await bot.change_presence(activity=discord.Game(name='!help für Hilfe'))
+    print("slash ready")
+    print(f'Bot ist eingeloggt als {bot.user.name}')
 
 
 async def get_audit_log_entry(guild, action, target=None):
