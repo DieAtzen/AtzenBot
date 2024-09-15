@@ -2157,6 +2157,53 @@ async def welcome(ctx, member: discord.Member):
     else:
         await ctx.send("Der Willkommenskanal wurde nicht gefunden.")
 
+import discord
+from discord.ext import commands
+import random
+
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+
+zitate = [
+    "Nehmt mir diese Fotzenrolle weg, bevor ich dafür sorge, dass Nicolas persönlich bei euch vorbeikommt und euch die kleinen Minihoden so wund leckt, bis ihr trotzdem abspritzt ~ Roxas",
+    "Ich schwör, Aamir Ibl kommt bei euch vorbei und macht euch zu seinen fetten Pakistani ~ Roxas"
+]
+
+bilder = [
+    "https://media.discordapp.net/attachments/1263982657969061961/1283167250903470141/Screenshot_20240910_224742_Discord.jpg?ex=66e7f0e0&is=66e69f60&hm=2d9f8f716434bada04510b14647908736ce5ac33dc83b6deb5c680aae5960b29&=&format=webp&width=1431&height=551",
+    "https://media.discordapp.net/attachments/1263982657969061961/1283145657355468810/image0.jpg?ex=66e7dcc4&is=66e68b44&hm=fe974b32ca9488303013573e5f0090fcb8ac2b93cffe44f224448bffafc7a196&=&format=webp",
+    "https://media.discordapp.net/attachments/1263982657969061961/1282416597553778919/image.png?ex=66e7d8c7&is=66e68747&hm=30929b0711855c1db3ce50ced227f822d0fc8d166f6605893f048955798f5099&=&format=webp&quality=lossless",
+    "https://media.discordapp.net/attachments/1263982657969061961/1279523042191605782/IMG_0540.png?ex=66e7ddf1&is=66e68c71&hm=c6f6ac21b96f360a3f2ac027505934838af8a72e3f4b317416ab2eae18370653&=&format=webp&quality=lossless",
+    "https://media.discordapp.net/attachments/1263982657969061961/1274422728115355738/image.png?ex=66e7c4e8&is=66e67368&hm=ffe34860c0521363f162c2f66d248d03adfde0707bd2407e8b398ee2c57afa1c&=&format=webp&quality=lossless"
+]
+
+@bot.command(name='zitat')
+async def zitat(ctx):
+    if random.choice([True, False]):
+        
+        text = random.choice(zitate)
+        embed = discord.Embed(
+            title="Hier ist ein Zitat für dich!",
+            description=text,
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+    else:
+        
+        url = random.choice(bilder)
+        embed = discord.Embed(
+            title="Hier ist ein Bild für dich!",
+            color=discord.Color.blue()
+        )
+        embed.set_image(url=url)
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+
+    await ctx.send(embed=embed)
+
+
+bot.run('DEIN_BOT_TOKEN')
 
 
 if __name__ == "__main__":
