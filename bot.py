@@ -176,12 +176,17 @@ async def help_command(ctx):
 
 
 
+is_ready = False
+
 @bot.event
 async def on_ready():
-    print(f'Bot ist eingeloggt als {bot.user.name}')
-    await bot.change_presence(activity=discord.Game(name='!help für Hilfe'))
-    await bot.tree.sync()
-    print("Slash-Commands wurden synchronisiert.")
+    global is_ready
+    if not is_ready:
+        print(f'Bot ist eingeloggt als {bot.user.name}')
+        await bot.tree.sync()
+        print("Slash-Commands wurden synchronisiert.")
+        await bot.change_presence(activity=discord.Game(name='!help für Hilfe'))
+        is_ready = True
 
 
 async def get_audit_log_entry(guild, action, target=None):
