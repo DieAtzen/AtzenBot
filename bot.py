@@ -38,12 +38,11 @@ bot.remove_command('help')
 @bot.command(name='help')
 async def help_command(ctx):
     
-    embed = discord.Embed(
+    embed_general = discord.Embed(
         title="Hilfe",
         description="Hier ist eine Übersicht der verfügbaren Befehle.",
         color=discord.Color.blue()
     )
-
     
     commands_list = {
         'warn': 'Warnt ein Mitglied des Servers. Beispiel: `!warn @Benutzer Grund`.',
@@ -55,15 +54,37 @@ async def help_command(ctx):
         'purge': 'Löscht eine bestimmte Anzahl von Nachrichten in einem Kanal. Beispiel: `!purge 10`.',
         'embed': 'Sendet eine benutzerdefinierte Embed-Nachricht. Beispiel: `!embed Titel | Beschreibung`.',
         'poll': 'Startet eine Umfrage. Beispiel: `!poll single 10 Frage | Option1, Option2`.',
-        'roulette': 'Man kann Roulette spielen: `!roulette`.',
     }
 
     for command, description in commands_list.items():
-        embed.add_field(name=f'!{command}', value=description, inline=False)
+        embed_general.add_field(name=f'!{command}', value=description, inline=False)
 
-    embed.set_footer(text="Made with ♥️ by Atzen Development")
+    embed_general.set_footer(text="Made with ♥️ by Atzen Development")
+    
+    
+    embed_casino = discord.Embed(
+        title="Casino Befehle",
+        description="Hier sind die Casino Commands.",
+        color=discord.Color.green()
+    )
 
-    await ctx.send(embed=embed)
+    casino_list = {
+        'roulette': 'Man kann Roulette spielen: `!roulette <Einsatz> <Option>`.',
+        'daily': 'Daily Coins abholen: `!daily`.',
+        'map': 'Zeigt die Roulette Map an: `!map`.',
+        'bank': 'Zeigt den Kontostand an: `!bank`.',
+        'bj': 'abfahrt Blackjack: `!bj`.',
+    }
+
+    for command, description in casino_list.items():
+        embed_casino.add_field(name=f'!{command}', value=description, inline=False)
+
+    embed_casino.set_footer(text="Made with ♥️ by Atzen Development")
+    
+    
+    await ctx.send(embed=embed_general)
+    await ctx.send(embed=embed_casino)
+
 
 
 @bot.event
@@ -96,85 +117,322 @@ async def send_message(channel, content):
 
 
 
+
+COINS_FILE = 'coins.json'
+USER_DATA_FILE = 'user_data.json'
+
+
+def load_coins():
+    try:
+        with open(COINS_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        print("Fehler beim Lesen der Coins-Datei")
+        return {}
+
+def save_coins(data):
+    with open(COINS_FILE, 'w') as file:
+        json.dump(data, file, indent=4)
+
+@bot.command(name='daily')
+async def daily(ctx):
+    coins_data = load_coins()
+    user_id = str(ctx.author.id)
+    user_data = coins_data.get(user_id, {})
+    user_coins = user_data.get('coins', 0)
+    last_claim = user_data.get('last_claim', None)
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    if last_claim != today:
+        coins_awarded = random.randint(0, 500)
+        user_coins += coins_awarded
+        user_data['coins'] = user_coins
+        user_data['last_claim'] = today
+        coins_data[user_id] = user_data
+        save_coins(coins_data)
+
+        embed = discord.Embed(
+            title="Tägliche Coins",
+            description=f"Du hast {coins_awarded} Coins erhalten! Deine neuen Coins: {user_coins}",
+            color=discord.Color.green()
+        )
+        embed.set_thumbnail(url="https://as1.ftcdn.net/v2/jpg/01/44/33/66/1000_F_144336685_lIKJEs8RzqhbpOwCycZTsFT0Eywxl41M.jpg")
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(
+            title="Tägliche Coins",
+            description="Du hast deine täglichen Coins bereits heute abgeholt. Versuche es morgen erneut!",
+            color=discord.Color.red()
+        )
+        embed.set_thumbnail(url="https://as1.ftcdn.net/v2/jpg/01/44/33/66/1000_F_144336685_lIKJEs8RzqhbpOwCycZTsFT0Eywxl41M.jpg")
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
+        await ctx.send(embed=embed)
+
+def load_user_data(user_id):
+    try:
+        with open('user_data.json', 'r') as file:
+            data = json.load(file)
+        return data.get(str(user_id), {'coins': 0})
+    except FileNotFoundError:
+        return {'coins': 0}
+
+def save_user_data(user_id, user_data):
+    try:
+        with open('user_data.json', 'r') as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        data = {}
+    data[str(user_id)] = user_data
+    with open('user_data.json', 'w') as file:
+        json.dump(data, file)
+
+@bot.command(name='bank')
+async def bank(ctx):
+    coins_data = load_coins()
+    user_id = str(ctx.author.id)
+    user_data = coins_data.get(user_id, {})
+    user_coins = user_data.get('coins', 0)
+
+    embed = discord.Embed(
+        title="Bank",
+        description=f"Du hast {user_coins} Coins.",
+        color=discord.Color.blue()
+    )
+    embed.set_thumbnail(url="https://as1.ftcdn.net/v2/jpg/01/44/33/66/1000_F_144336685_lIKJEs8RzqhbpOwCycZTsFT0Eywxl41M.jpg")
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
+    await ctx.send(embed=embed)
+
 @bot.command(name='roulette')
-async def roulette(ctx, bet: str = None):
+async def roulette(ctx, bet: int, *options):
+    coins_data = load_coins()
+    user_id = str(ctx.author.id)
+    user_coins = coins_data.get(user_id, {}).get('coins', 0)
+
+    if bet > user_coins:
+        embed = discord.Embed(
+            title="Nicht genug Coins",
+            description=f"Du hast nicht genug Coins, um {bet} zu setzen.",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed)
+        return
+
+    valid_options = ['red', 'black', '2to1', 'even', '1-18', '19-36'] + [str(num) for num in range(1, 37)]
+    if not all(option.lower() in valid_options for option in options):
+        embed = discord.Embed(
+            title="Ungültige Wetten",
+            description=f"Die Wetten müssen eine der folgenden Optionen sein: {', '.join(valid_options)}",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed)
+        return
+
+    winning_number = random.randint(0, 36)
+    winning_color = 'red' if winning_number % 2 == 0 else 'black'
+    
+    winnings = 0
+    if 'red' in options and winning_color == 'red':
+        winnings += bet * 2
+    if 'black' in options and winning_color == 'black':
+        winnings += bet * 2
+    if 'even' in options and winning_number % 2 == 0:
+        winnings += bet * 2
+    if '1-18' in options and 1 <= winning_number <= 18:
+        winnings += bet * 2
+    if '19-36' in options and 19 <= winning_number <= 36:
+        winnings += bet * 2
+    if str(winning_number) in options:
+        winnings += bet * 35
+
+    coins_data[user_id] = {'coins': user_coins - bet + winnings}
+    save_coins(coins_data)
+
+    embed = discord.Embed(
+        title="Roulette Ergebnis",
+        description=f"Die Gewinnzahl ist {winning_number} ({winning_color}).",
+        color=discord.Color.green() if winnings > 0 else discord.Color.red()
+    )
+    embed.add_field(name="Dein Einsatz", value=f"{bet} Coins", inline=False)
+    embed.add_field(name="Dein Gewinn", value=f"{winnings} Coins" if winnings > 0 else "Kein Gewinn", inline=False)
+    embed.set_thumbnail(url="https://as1.ftcdn.net/v2/jpg/01/44/33/66/1000_F_144336685_lIKJEs8RzqhbpOwCycZTsFT0Eywxl41M.jpg")
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
+    await ctx.send(embed=embed)
+
+@roulette.error
+async def roulette_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        embed = discord.Embed(
+            title="Fehler beim Roulette-Befehl",
+            description="Der Befehl ist nicht korrekt verwendet worden.",
+            color=discord.Color.red()
+        )
+        embed.add_field(name="Verwendung", value="`!roulette <Einsatz> <Optionen...>`\nBeispiel: `!roulette 100 red black 1-18`", inline=False)
+        embed.set_footer(text="Bitte gib sowohl den Einsatz als auch gültige Optionen an.")
+        await ctx.send(embed=embed)
+    else:
+        raise error
+
+@bot.command(name='map')
+async def map(ctx):
+    embed = discord.Embed(
+        title="Roulette Map",
+        description="Hier ist die Roulette-Map.",
+        color=discord.Color.gold()
+    )
+    embed.set_image(url="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Roulette_wheel.svg/800px-Roulette_wheel.svg.png")
+    embed.set_footer(text="Made with ♥️ by Atzen Development")
+    await ctx.send(embed=embed)
+
+@bot.command(name='bj')
+async def blackjack(ctx, bet: int = None):
+    
     if bet is None:
         embed = discord.Embed(
-            title="Fehler beim Roulette",
-            description="Bitte gib eine Wettoption an. Beispiele: `red`, `black`, `even`, `odd`, `1-18`, `19-36`, `2to1`, oder eine Zahl von `0` bis `36`.",
+            title="Fehler beim Blackjack-Befehl",
+            description="Du musst einen Einsatz angeben, um das Spiel zu starten.\nVerwendung: `!bj <Einsatz>`\nBeispiel: `!bj 100`",
             color=discord.Color.red()
         )
-        embed.add_field(name="Verwendung", value="`!roulette <Wettoption>`", inline=False)
-        embed.set_footer(text="Beispiel: `!roulette red`")
+        embed.set_footer(text="Bitte gib einen gültigen Einsatz an.")
         await ctx.send(embed=embed)
         return
 
-    bet = bet.lower()
+    coins_data = load_coins()
+    user_id = str(ctx.author.id)
+    user_coins = coins_data.get(user_id, {}).get('coins', 0)
 
-    # Definiere die möglichen Wettoptionen
-    valid_bets = ['red', 'black', 'even', 'odd', '1-18', '19-36', '2to1']
-    if bet not in valid_bets and not bet.isdigit():
+    
+    if bet <= 0:
         embed = discord.Embed(
-            title="Ungültige Wette",
-            description=f"Ungültige Wettoption. Bitte wähle eine der folgenden Optionen: {', '.join(valid_bets)}, oder eine Zahl von 0 bis 36.",
+            title="Fehler beim Einsatz",
+            description="Der Einsatz muss größer als 0 sein.",
             color=discord.Color.red()
         )
-        embed.set_footer(text="Bitte versuche es erneut.")
         await ctx.send(embed=embed)
         return
 
-    # Generiere die gewonnene Zahl und die Farbe
-    winning_number = random.randint(0, 36)
-    colors = {0: 'green', 1: 'red', 2: 'black', 3: 'red', 4: 'black', 5: 'red', 6: 'black', 7: 'red', 8: 'black', 9: 'red', 10: 'black', 11: 'black', 12: 'red', 13: 'black', 14: 'red', 15: 'black', 16: 'red', 17: 'black', 18: 'red', 19: 'red', 20: 'black', 21: 'red', 22: 'black', 23: 'red', 24: 'black', 25: 'red', 26: 'black', 27: 'red', 28: 'black', 29: 'red', 30: 'black', 31: 'red', 32: 'black', 33: 'red', 34: 'black', 35: 'red', 36: 'black'}
-    winning_color = colors.get(winning_number, 'green')
+    if bet > user_coins:
+        embed = discord.Embed(
+            title="Fehler beim Einsatz",
+            description=f"Du hast nicht genug Coins, um {bet} zu setzen.",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed)
+        return
 
-    # Überprüfe die Wette
-    if bet.isdigit():
-        bet_number = int(bet)
-        if bet_number == winning_number:
-            result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number}. Du hast gewonnen!"
-            color = discord.Color.green()
+    def card_value(card):
+        if card in ['J', 'Q', 'K']:
+            return 10
+        elif card == 'A':
+            return 11
         else:
-            result = f"Leider verloren. Die gewonnene Zahl war {winning_number}."
-            color = discord.Color.red()
-    elif bet == 'red' and winning_color == 'red':
-        result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (Rot). Du hast gewonnen!"
-        color = discord.Color.green()
-    elif bet == 'black' and winning_color == 'black':
-        result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (Schwarz). Du hast gewonnen!"
-        color = discord.Color.green()
-    elif bet == 'even' and winning_number % 2 == 0 and winning_number != 0:
-        result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (Gerade). Du hast gewonnen!"
-        color = discord.Color.green()
-    elif bet == 'odd' and winning_number % 2 != 0:
-        result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (Ungerade). Du hast gewonnen!"
-        color = discord.Color.green()
-    elif bet == '1-18' and 1 <= winning_number <= 18:
-        result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (1-18). Du hast gewonnen!"
-        color = discord.Color.green()
-    elif bet == '19-36' and 19 <= winning_number <= 36:
-        result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (19-36). Du hast gewonnen!"
-        color = discord.Color.green()
-    elif bet == '2to1':
-        two_to_one = (winning_number % 3) + 1
-        result = f"Die gewonnene Zahl ist {winning_number}. Du hast auf die 2 zu 1 gesetzt und gewonnen, wenn die Zahl 1, 2 oder 3 ist!"
-        if two_to_one == 1:
-            color = discord.Color.green()
-        else:
-            result = f"Die gewonnene Zahl ist {winning_number}. Du hast verloren. Die Zahl war nicht in der Gruppe 1-3."
-            color = discord.Color.red()
-    else:
-        result = f"Leider verloren. Die gewonnene Zahl war {winning_number}."
-        color = discord.Color.red()
+            return int(card)
 
-    # Erstelle und sende das Embed
+    def calculate_hand(hand):
+        value = sum(card_value(card) for card in hand)
+        num_aces = hand.count('A')
+        while value > 21 and num_aces:
+            value -= 10
+            num_aces -= 1
+        return value
+
+    def draw_card(deck):
+        return deck.pop()
+
+    deck = [str(num) for num in range(2, 11)] * 4 + ['J', 'Q', 'K', 'A'] * 4
+    random.shuffle(deck)
+
+    player_hand = [draw_card(deck), draw_card(deck)]
+    dealer_hand = [draw_card(deck), draw_card(deck)]
+
     embed = discord.Embed(
-        title="Roulette-Ergebnis",
-        description=result,
+        title="Blackjack",
+        description=f"Deine Hand: {', '.join(player_hand)} ({calculate_hand(player_hand)})\nDer Dealer zeigt: {dealer_hand[0]}",
+        color=discord.Color.blue()
+    )
+    await ctx.send(embed=embed)
+
+    async def player_turn():
+        while True:
+            player_value = calculate_hand(player_hand)
+            if player_value > 21:
+                return player_value
+
+            embed = discord.Embed(
+                title="Spielerzug",
+                description=f"Deine Hand: {', '.join(player_hand)} ({player_value})\nMöchtest du eine weitere Karte ziehen oder stehen bleiben? Reagiere mit `hit` um zu ziehen oder `stand` um zu stehen.",
+                color=discord.Color.blue()
+            )
+            await ctx.send(embed=embed)
+
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel and m.content.lower() in ['hit', 'stand']
+
+            try:
+                msg = await bot.wait_for('message', timeout=30.0, check=check)
+                if msg.content.lower() == 'hit':
+                    player_hand.append(draw_card(deck))
+                elif msg.content.lower() == 'stand':
+                    break
+                else:
+                    embed = discord.Embed(
+                        title="Fehler bei der Eingabe",
+                        description="Bitte antworte mit `!hit` um eine Karte zu ziehen oder `!stand` um zu stehen.",
+                        color=discord.Color.red()
+                    )
+                    await ctx.send(embed=embed)
+            except asyncio.TimeoutError:
+                embed = discord.Embed(
+                    title="Zeit abgelaufen",
+                    description="Die Zeit ist abgelaufen. Du musst dich entscheiden, ob du ziehen oder stehen bleiben möchtest.",
+                    color=discord.Color.red()
+                )
+                await ctx.send(embed=embed)
+                break
+
+        return calculate_hand(player_hand)
+
+    async def dealer_turn(dealer_value):
+        while dealer_value < 17:
+            dealer_hand.append(draw_card(deck))
+            dealer_value = calculate_hand(dealer_hand)
+        return dealer_value
+
+    player_value = await player_turn()
+    if player_value > 21:
+        embed = discord.Embed(
+            title="Blackjack Ergebnis",
+            description=f"Du hast überkauft! Deine Hand: {', '.join(player_hand)} ({player_value})\nDealer gewinnt.",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed)
+        coins_data[user_id]['coins'] -= bet
+        save_coins(coins_data)
+        return
+
+    dealer_value = await dealer_turn(calculate_hand(dealer_hand))
+
+    if dealer_value > 21 or player_value > dealer_value:
+        result = "Du hast gewonnen!"
+        coins_data[user_id]['coins'] += bet
+        color = discord.Color.green()
+    elif player_value < dealer_value:
+        result = "Dealer gewinnt!"
+        coins_data[user_id]['coins'] -= bet
+        color = discord.Color.red()
+    else:
+        result = "Unentschieden!"
+        color = discord.Color.gray()
+
+    save_coins(coins_data)
+
+    embed = discord.Embed(
+        title="Blackjack Ergebnis",
+        description=f"Deine Hand: {', '.join(player_hand)} ({player_value})\nDealer Hand: {', '.join(dealer_hand)} ({dealer_value})\n{result}",
         color=color
     )
-    embed.set_footer(text="Made with ♥️ by Atzen Development")
-
     await ctx.send(embed=embed)
 
 @bot.command(name='poll')
