@@ -2180,7 +2180,8 @@ bilder = [
     "https://media.discordapp.net/attachments/1244726161456500746/1284901367990714402/image.png?ex=66e85126&is=66e6ffa6&hm=5dcb13ae099f78286b6fcffd37bc642ab4c6cac50dfbc32e57f87203f93fabd6&=&format=webp&quality=lossless",
     "https://media.discordapp.net/attachments/1201886124499279903/1260981938865438881/image.png?ex=66e84f72&is=66e6fdf2&hm=f41376132a51d98be352bd841426520a2de79639b87a2345b72449cc9c730c79&=&format=webp&quality=lossless",
     "https://media.discordapp.net/attachments/1263982657969061961/1284901791653429332/Screenshot_2024-09-15_174047.png?ex=66e8518b&is=66e7000b&hm=e3181741fac60230576d27d9ac7411810170e231f6edfded0ef170d0568186f3&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284901791888179385/Screenshot_2024-09-15_174029.png?ex=66e8518b&is=66e7000b&hm=5b025b7ccf418043d714c0025d4cb54b593a7ef872afdbf6dfc429122b593aea&=&format=webp&quality=lossless"
+    "https://media.discordapp.net/attachments/1263982657969061961/1284901791888179385/Screenshot_2024-09-15_174029.png?ex=66e8518b&is=66e7000b&hm=5b025b7ccf418043d714c0025d4cb54b593a7ef872afdbf6dfc429122b593aea&=&format=webp&quality=lossless",
+    "https://media.discordapp.net/attachments/1263975253600768001/1284902995858948107/image.png?ex=66e852aa&is=66e7012a&hm=f1487a943b39e9bd5ed5401ba88e0a0c69405fd8c2f57eb5562661ae9a30a741&=&format=webp&quality=lossless"
 ]
 
 @bot.command(name='zitat')
