@@ -1,6 +1,8 @@
 import json
 import discord
 import asyncio
+import logging
+from datetime import datetime
 from discord.ext import commands
 
 # Config
@@ -16,13 +18,18 @@ ALLOWED_ROLE_IDS = [
     1282416647612792963
 ]
 
-
+logging.basicConfig(level=logging.INFO)
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+intents.members = True
+intents.messages = True
+intents.reactions = True
+intents.guilds = True
+intents.guild_messages = True
+intents.guild_reactions = True
 
-import discord
-from discord.ext import commands
+bot = commands.Bot(command_prefix='!', intents=intents)  
+
 
 bot.remove_command('help')
 
@@ -61,6 +68,28 @@ async def on_ready():
     print(f'Bot ist eingeloggt als {bot.user.name}')
     await bot.change_presence(activity=discord.Game(name='!help für Hilfe'))
 
+
+async def get_audit_log_entry(guild, action, target=None):
+    try:
+        async for entry in guild.audit_logs(action=action):
+            if target is None or entry.target == target:
+                return entry
+        return None
+    except discord.Forbidden:
+        print("Keine Berechtigung, das Audit-Log zu lesen.")
+    except discord.HTTPException as e:
+        print(f"Fehler beim Abrufen des Audit-Logs: {e}")
+
+
+async def send_message(channel, content):
+    try:
+        await channel.send(content)
+    except discord.HTTPException as e:
+        if e.status == 429:
+            retry_after = e.retry_after
+            print(f"Rate Limit erreicht. Erneuter Versuch in {retry_after} Sekunden.")
+            await asyncio.sleep(retry_after)
+            await channel.send(content)
 
 @bot.command(name='poll')
 @commands.has_permissions(manage_roles=True)  
@@ -216,7 +245,7 @@ async def poll_error(ctx, error):
 @bot.tree.command(name="embed", description="Sendet eine Embed-Nachricht")
 async def embed(interaction: discord.Interaction, title: str, description: str, color: str):
     try:
-        # Hex zu Integer
+        
         color_int = int(color.replace('#', ''), 16)
     except ValueError:
         
@@ -478,14 +507,14 @@ async def cases(ctx, member: discord.Member):
         
         embed.set_thumbnail(url=member.avatar.url)
 
-        # die warns
+        
         if warns:
             for i, warn in enumerate(warns, 1):
                 if isinstance(warn, dict):
                     reason = warn.get('reason', 'Keine Angabe')
                     author_id = warn.get('author')
                     
-                    # Prüfen, ob author_id gültig ist
+                    
                     if author_id:
                         try:
                             author = await bot.fetch_user(author_id)
@@ -502,7 +531,7 @@ async def cases(ctx, member: discord.Member):
         else:
             embed.add_field(name="Keine Warnungen", value=f"{member.mention} hat keine Warnungen.", inline=False)
 
-        # unser geiler footer
+        
         embed.set_footer(text="Made with ♥️ by Atzen Development")
 
         await ctx.send(embed=embed)
@@ -1024,184 +1053,265 @@ async def märchen(ctx):
 
 LOG_CHANNEL_ID = 1284652741058232453
 
-def truncate_field_value(value, max_length=1024):
-    if len(value) > max_length:
-        return value[:max_length - 3] + '...'  
-    return value
+def kürze_feldwert(wert, max_length=1024):
+    """Kürzt einen Feldwert auf eine bestimmte Länge."""
+    if len(wert) > max_length:
+        return wert[:max_length - 3] + "..."
+    return wert
 
-async def log_to_channel(bot, embed):
+def format_permissions(permissions):
+    """Formatiert die Berechtigungen in einer lesbaren Weise, kürzt sie wenn nötig."""
+    perm_list = []
+    for perm in dir(permissions):
+        if perm.startswith('__') or perm == 'items':
+            continue
+        if getattr(permissions, perm):
+            perm_list.append(perm)
+    if len(perm_list) > 10:
+        return ', '.join(perm_list[:10]) + '...'
+    return ', '.join(perm_list)
+
+
+
+async def find_audit_log_entry(guild, action_type, target_id):
+    try:
+        async for entry in guild.audit_logs(action=action_type):
+            if entry.target.id == target_id:
+                return entry
+        return None
+    except Exception as e:
+        logging.error(f"Fehler beim Abrufen der Audit-Logs: {e}")
+        return None
+
+async def log_in_kanal(bot, embed):
     try:
         log_channel = bot.get_channel(LOG_CHANNEL_ID)
         if log_channel:
             await log_channel.send(embed=embed)
         else:
-            print(f"Log channel with ID {LOG_CHANNEL_ID} not found.")
+            logging.error(f"Log-Kanal mit ID {LOG_CHANNEL_ID} nicht gefunden.")
     except Exception as e:
-        print(f"An error occurred while sending the log message: {e}")
+        logging.error(f"Fehler beim Senden der Log-Nachricht: {e}")
 
 @bot.event
 async def on_guild_role_create(role):
     embed = discord.Embed(
-        title="Role Created",
-        description=f"A new role has been created: {role.mention}",
+        title="🆕 Rolle erstellt",
+        description=f"Eine neue Rolle wurde erstellt: {role.mention}",
         color=discord.Color.green()
     )
-    await log_to_channel(bot, embed)
+    embed.set_footer(text=f"ID: {role.id}")
+    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/123456789012345678.png")  
+    await log_in_kanal(bot, embed)
 
 @bot.event
 async def on_guild_role_delete(role):
     embed = discord.Embed(
-        title="Role Deleted",
-        description=f"A role has been deleted: {role.mention}",
+        title="❌ Rolle gelöscht",
+        description=f"Eine Rolle wurde gelöscht: {role.name}",
         color=discord.Color.red()
     )
-    await log_to_channel(bot, embed)
-
-@bot.event
-async def on_member_update(before, after):
-    added_roles = [role.mention for role in set(after.roles) - set(before.roles)]
-    removed_roles = [role.mention for role in set(before.roles) - set(after.roles)]
-
-    if added_roles or removed_roles:
-        embed = discord.Embed(
-            title="Roles Updated",
-            description=f"Roles for {after.mention} have been updated.",
-            color=discord.Color.blue()
-        )
-        if added_roles:
-            embed.add_field(name="Roles Added", value=truncate_field_value(", ".join(added_roles)), inline=False)
-        if removed_roles:
-            embed.add_field(name="Roles Removed", value=truncate_field_value(", ".join(removed_roles)), inline=False)
-        await log_to_channel(bot, embed)
+    embed.set_footer(text=f"ID: {role.id}")
+    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/123456789012345678.png")  
+    await log_in_kanal(bot, embed)
 
 @bot.event
 async def on_guild_role_update(before, after):
     embed = discord.Embed(
-        title="Role Updated",
-        description=f"The role {after.mention} has been updated.",
+        title="🔄 Rolle aktualisiert",
+        description=f"Die Rolle {after.mention} wurde aktualisiert.",
         color=discord.Color.orange()
     )
     
     if before.name != after.name:
-        name_change = f"From `{before.name}` to `{after.name}`"
-        embed.add_field(name="Name Changed", value=truncate_field_value(name_change), inline=False)
+        name_change = f"📛 Name geändert: \nVorher: `{before.name}`\nNachher: `{after.name}`"
+        embed.add_field(name="Name geändert", value=kürze_feldwert(name_change), inline=False)
     
     if before.permissions != after.permissions:
-        permissions_change = f"Before: {format_permissions(before.permissions)}\nAfter: {format_permissions(after.permissions)}"
-        embed.add_field(name="Permissions Changed", value=truncate_field_value(permissions_change), inline=False)
+        permissions_change = f"⚙️ Berechtigungen geändert: \nVorher: {format_permissions(before.permissions)}\nNachher: {format_permissions(after.permissions)}"
+        embed.add_field(name="Berechtigungen geändert", value=kürze_feldwert(permissions_change), inline=False)
     
-    await log_to_channel(bot, embed)
+    embed.set_footer(text=f"ID: {after.id}")
+    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/123456789012345678.png")  
+    await log_in_kanal(bot, embed)
 
-def format_permissions(permissions):
-    formatted = []
-    for perm in permissions:
-        formatted.append(f"{perm}: {'Yes' if permissions[perm] else 'No'}")
-    return "\n".join(formatted[:10])  
+
+
+@bot.event
+async def on_message_edit(before, after):
+    if before.author.bot:
+        return
+
+    if before.content == after.content and not before.attachments and not after.attachments:
+        return  # Keine Bearbeitung bei reinem Text oder gleichem Inhalt
+
+    embed = discord.Embed(
+        title="✏️ Nachricht bearbeitet",
+        description=f"Eine Nachricht von {after.author.mention} wurde bearbeitet.",
+        color=discord.Color.orange()
+    )
+
+    # Vorherigen Inhalt prüfen
+    if before.content:
+        embed.add_field(name="Vorher", value=f"```{kürze_feldwert(before.content)}```", inline=False)
+    if before.attachments:
+        attachment_urls = [attachment.url for attachment in before.attachments]
+        embed.add_field(name="Vorherige Anhänge", value="\n".join(attachment_urls), inline=False)
+
+    # Nachfolgenden Inhalt prüfen
+    if after.content:
+        embed.add_field(name="Nachher", value=f"```{kürze_feldwert(after.content)}```", inline=False)
+    if after.attachments:
+        attachment_urls = [attachment.url for attachment in after.attachments]
+        embed.add_field(name="Nachfolgende Anhänge", value="\n".join(attachment_urls), inline=False)
+
+    embed.set_footer(text=f"ID: {after.id}", icon_url=after.author.display_avatar.url)
+    embed.set_author(name=after.author.display_name, icon_url=after.author.display_avatar.url)
+    embed.set_thumbnail(url=after.author.display_avatar.url)
+    embed.timestamp = discord.utils.utcnow()
+    await log_in_kanal(bot, embed)
+
+@bot.event
+async def on_message_delete(message):
+    if message.author.bot:
+        return
+
+    embed = discord.Embed(
+        title="🗑️ Nachricht gelöscht",
+        description=f"Eine Nachricht von {message.author.mention} wurde gelöscht.",
+        color=discord.Color.red()
+    )
+
+    if message.content:
+        embed.add_field(name="Inhalt", value=f"```{kürze_feldwert(message.content)}```", inline=False)
+    if message.attachments:
+        attachment_urls = [attachment.url for attachment in message.attachments]
+        embed.add_field(name="Anhänge", value="\n".join(attachment_urls), inline=False)
+
+    embed.set_footer(text=f"ID: {message.id}", icon_url=message.author.display_avatar.url)
+    embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
+    embed.set_thumbnail(url=message.author.display_avatar.url)
+    embed.timestamp = discord.utils.utcnow()
+    await log_in_kanal(bot, embed)
+
 
 @bot.event
 async def on_member_join(member):
     embed = discord.Embed(
-        title="Member Joined",
-        description=f"{member.mention} has joined the server.",
+        title="Mitglied beigetreten",
+        description=f"{member.mention} ist dem Server beigetreten.",
         color=discord.Color.blue()
     )
-    await log_to_channel(bot, embed)
+    await log_in_kanal(bot, embed)
 
 @bot.event
 async def on_member_remove(member):
     embed = discord.Embed(
-        title="Member Left",
-        description=f"{member.mention} has left the server.",
+        title="Mitglied hat verlassen",
+        description=f"{member.mention} hat den Server verlassen.",
         color=discord.Color.red()
     )
-    await log_to_channel(bot, embed)
+    await log_in_kanal(bot, embed)
 
 @bot.event
 async def on_member_update(before, after):
+    
     embed = discord.Embed(
-        title="Member Updated",
-        description=f"The member {after.mention} has been updated.",
-        color=discord.Color.orange()
+        title="🔄 **Mitglied aktualisiert**",
+        description=f"Das Mitglied {after.mention} wurde aktualisiert.",
+        color=discord.Color.orange(),  
+        timestamp=datetime.utcnow()  
     )
+    embed.set_thumbnail(url=after.avatar.url)  
+    embed.set_footer(text=f"ID: {after.id}")  
+
+    
     if before.nick != after.nick:
-        embed.add_field(name="Nickname Changed", value=f"From `{before.nick}` to `{after.nick}`", inline=False)
-    if before.roles != after.roles:
-        added_roles = [role.mention for role in set(after.roles) - set(before.roles)]
-        removed_roles = [role.mention for role in set(before.roles) - set(after.roles)]
-        if added_roles:
-            embed.add_field(name="Roles Added", value=truncate_field_value(", ".join(added_roles)), inline=False)
-        if removed_roles:
-            embed.add_field(name="Roles Removed", value=truncate_field_value(", ".join(removed_roles)), inline=False)
-    await log_to_channel(bot, embed)
+        embed.add_field(
+            name="🆕 **Spitzname geändert**",
+            value=f"**Vorher:** `{before.nick}`\n**Nachher:** `{after.nick}`",
+            inline=False
+        )
+    
+    
+    added_roles = [role.mention for role in set(after.roles) - set(before.roles)]
+    removed_roles = [role.mention for role in set(before.roles) - set(after.roles)]
+    
+    if added_roles:
+        role_embed = discord.Embed(
+            title="🔹 **Rollen hinzugefügt**",
+            description=f"**{after.mention}** hat neue Rollen erhalten.",
+            color=discord.Color.blue(),  
+            timestamp=datetime.utcnow()  
+        )
+        role_embed.set_thumbnail(url=after.avatar.url)  
+        role_embed.add_field(
+            name="📈 Neue Rollen",
+            value="\n".join(f"**•** {role}" for role in added_roles),
+            inline=False
+        )
+        role_embed.set_footer(text=f"ID: {after.id}")  
+        await log_in_kanal(bot, role_embed)
+    
+    if removed_roles:
+        role_embed = discord.Embed(
+            title="🔻 **Rollen entfernt**",
+            description=f"**{after.mention}** hat Rollen verloren.",
+            color=discord.Color.red(),  
+            timestamp=datetime.utcnow()  
+        )
+        role_embed.set_thumbnail(url=after.avatar.url)  
+        role_embed.add_field(
+            name="📉 Entfernte Rollen",
+            value="\n".join(f"**•** {role}" for role in removed_roles),
+            inline=False
+        )
+        role_embed.set_footer(text=f"ID: {after.id}")  
+        await log_in_kanal(bot, role_embed)
+    
+    
+    await log_in_kanal(bot, embed)
 
-@bot.event
-async def on_guild_update(before, after):
-    embed = discord.Embed(
-        title="Server Updated",
-        description=f"The server `{before.name}` has been updated.",
-        color=discord.Color.orange()
-    )
-    if before.name != after.name:
-        embed.add_field(name="Server Name Changed", value=f"From `{before.name}` to `{after.name}`", inline=False)
-    if before.icon != after.icon:
-        embed.add_field(name="Server Icon Changed", value="The server icon has been updated.", inline=False)
-        embed.set_thumbnail(url=after.icon_url)
-    if before.region != after.region:
-        embed.add_field(name="Server Region Changed", value=f"From `{before.region}` to `{after.region}`", inline=False)
-    if before.premium_subscription_count < after.premium_subscription_count:
-        embed.add_field(name="Server Boost Added", value=f"The server now has {after.premium_subscription_count} boosts.", inline=False)
-    if before.premium_tier != after.premium_tier:
-        embed.add_field(name="Boost Level Changed", value=f"From `{before.premium_tier}` to `{after.premium_tier}`", inline=False)
-    await log_to_channel(bot, embed)
-
-@bot.event
-async def on_command(ctx):
-    embed = discord.Embed(
-        title="Command Executed",
-        description=f"The command `{ctx.command}` was used by {ctx.author.mention}.",
-        color=discord.Color.blue()
-    )
-    await log_to_channel(bot, embed)
-
-@bot.event
-async def on_message_edit(before, after):
-    embed = discord.Embed(
-        title="Message Edited",
-        description=f"A message from {after.author.mention} was edited.\n\nBefore: {truncate_field_value(before.content)}\nAfter: {truncate_field_value(after.content)}",
-        color=discord.Color.orange()
-    )
-    await log_to_channel(bot, embed)
-
-@bot.event
-async def on_message_delete(message):
-    embed = discord.Embed(
-        title="Message Deleted",
-        description=f"A message from {message.author.mention} was deleted.\nContent: {truncate_field_value(message.content)}",
-        color=discord.Color.red()
-    )
-    await log_to_channel(bot, embed)
 
 @bot.event
 async def on_reaction_add(reaction, user):
     if user.bot:
         return
     embed = discord.Embed(
-        title="Reaction Added",
-        description=f"{user.mention} reacted to a message with {reaction.emoji}.",
+        title="Reaktion hinzugefügt",
+        description=f"{user.mention} hat mit {reaction.emoji} auf eine Nachricht reagiert.",
         color=discord.Color.blue()
     )
-    await log_to_channel(bot, embed)
+    await log_in_kanal(bot, embed)
 
 @bot.event
 async def on_reaction_remove(reaction, user):
     if user.bot:
         return
     embed = discord.Embed(
-        title="Reaction Removed",
-        description=f"{user.mention} removed a reaction: {reaction.emoji}.",
+        title="Reaktion entfernt",
+        description=f"{user.mention} hat die Reaktion {reaction.emoji} entfernt.",
         color=discord.Color.purple()
     )
-    await log_to_channel(bot, embed)
+    await log_in_kanal(bot, embed)
+
+@bot.event
+async def on_guild_channel_create(channel):
+    embed = discord.Embed(
+        title="Kanal erstellt",
+        description=f"Ein neuer Kanal wurde erstellt: {channel.mention}",
+        color=discord.Color.green()
+    )
+    await log_in_kanal(bot, embed)
+
+@bot.event
+async def on_guild_channel_delete(channel):
+    embed = discord.Embed(
+        title="Kanal gelöscht",
+        description=f"Der Kanal `{channel.name}` wurde gelöscht.",
+        color=discord.Color.red()
+    )
+    await log_in_kanal(bot, embed)
 
 @bot.event
 async def on_guild_emojis_update(before, after):
@@ -1210,19 +1320,180 @@ async def on_guild_emojis_update(before, after):
     
     if added:
         embed = discord.Embed(
-            title="Emojis Added",
-            description="The following emojis have been added:\n" + "\n".join(f"{e.name} ({e})" for e in added),
+            title="Emojis hinzugefügt",
+            description="Die folgenden Emojis wurden hinzugefügt:\n" + "\n".join(f"{e.name} ({e})" for e in added),
             color=discord.Color.green()
         )
-        await log_to_channel(bot, embed)
+        await log_in_kanal(bot, embed)
     
     if removed:
         embed = discord.Embed(
-            title="Emojis Removed",
-            description="The following emojis have been removed:\n" + "\n".join(f"{e.name} ({e})" for e in removed),
+            title="Emojis entfernt",
+            description="Die folgenden Emojis wurden entfernt:\n" + "\n".join(f"{e.name} ({e})" for e in removed),
             color=discord.Color.red()
         )
-        await log_to_channel(bot, embed)
+        await log_in_kanal(bot, embed)
+
+async def log_channel_update(bot, before, after):
+    
+    try:
+        audit_logs = []
+        async for entry in after.guild.audit_logs(action=discord.AuditLogAction.channel_update):
+            audit_logs.append(entry)
+        for entry in audit_logs:
+            if entry.target.id == after.id:
+                verantwortliche_person = entry.user
+                break
+        else:
+            verantwortliche_person = None
+
+    except Exception as e:
+        logging.error(f"Fehler beim Abrufen der Audit-Logs: {e}")
+        verantwortliche_person = None
+
+    before_perms = before.overwrites
+    after_perms = after.overwrites
+
+    changes = []
+    for role in before_perms:
+        before_perm = before_perms[role]
+        after_perm = after_perms.get(role, discord.PermissionOverwrite())
+        
+        if any(getattr(before_perm, p) != getattr(after_perm, p) for p in dir(before_perm) if not p.startswith('_')):
+            before_perm_list = format_permissions(before_perm)
+            after_perm_list = format_permissions(after_perm)
+            change = f"**{role.name}**:\nVorher: {before_perm_list}\nNachher: {after_perm_list}"
+            changes.append(change)
+
+    if not changes:
+        changes.append("Keine Berechtigungen geändert.")
+
+    
+    changes_text = "\n".join(changes)
+    if len(changes_text) > 1024:
+        changes_text = kürze_feldwert(changes_text)
+
+    
+    embed = discord.Embed(title="Kanal Aktualisiert", description=f"Der Kanal {after.mention} wurde aktualisiert.", color=0x00ff00)
+    embed.add_field(name="Vorheriger Name", value=before.name, inline=False)
+    embed.add_field(name="Neuer Name", value=after.name, inline=False)
+    embed.add_field(name="Geänderte Berechtigungen", value=changes_text, inline=False)
+    
+    if verantwortliche_person:
+        embed.set_footer(text=f"Änderung durchgeführt von: {verantwortliche_person.display_name}", icon_url=verantwortliche_person.display_avatar.url)
+    else:
+        embed.set_footer(text="Verantwortliche Person konnte nicht ermittelt werden.")
+
+    
+    try:
+        log_channel = bot.get_channel(1284652741058232453)  
+        await log_channel.send(embed=embed)
+    except Exception as e:
+        logging.error(f"Fehler beim Senden der Log-Nachricht: {e}")
+
+
+def create_channel_update_embed(before, after, changes, executor=None):
+    embed = discord.Embed(
+        title="🔄 **Kanal aktualisiert**",
+        description=f"Der Kanal ⁠» {after.mention} wurde aktualisiert.",
+        color=discord.Color.blue()
+    )
+    
+    
+    if before.name != after.name:
+        embed.add_field(
+            name="📛 **Name geändert**",
+            value=f"Vorher: `{before.name}`\nNachher: `{after.name}`",
+            inline=False
+        )
+    
+    
+    if changes:
+        changes_text = "\n".join(changes)
+        if len(changes_text) > 1024:
+            changes_text = changes_text[:1021] + "..."
+        embed.add_field(
+            name="⚙️ **Berechtigungen geändert**",
+            value=changes_text,
+            inline=False
+        )
+    
+    
+    if executor:
+        embed.set_footer(
+            text=f"Änderung durchgeführt von: {executor.name}",
+            icon_url=executor.avatar_url
+        )
+    
+    return embed
+
+
+@bot.event
+async def on_ready():
+    print(f'Bot ist eingeloggt als {bot.user.name}')
+
+@bot.event
+async def on_guild_channel_update(before, after):
+    
+    log_channel = bot.get_channel(LOG_CHANNEL_ID)
+    
+    
+    if log_channel is None:
+        print("⚠️ Log-Channel nicht gefunden! Überprüfe die Channel-ID.")
+        return
+
+    
+    embed = discord.Embed(
+        title="📁 **Kanal aktualisiert**",
+        description=f"**Kanal:**\n{before.mention} ➔ {after.mention}",
+        color=discord.Color.blue()
+    )
+
+    
+    changes = []
+    if before.name != after.name:
+        changes.append(f"**Name geändert:** `{before.name}` ➔ `{after.name}`")
+    
+    if before.category != after.category:
+        changes.append(f"**Kategorie geändert:** `{before.category}` ➔ `{after.category}`")
+
+    if before.position != after.position:
+        changes.append(f"**Position geändert:** `{before.position}` ➔ `{after.position}`")
+
+    if before.topic != after.topic:
+        changes.append(f"**Thema geändert:** `{before.topic}` ➔ `{after.topic}`")
+
+    if changes:
+        embed.add_field(name="Änderungen:", value="\n".join(changes), inline=False)
+    else:
+        embed.add_field(name="Änderungen:", value="Keine signifikanten Änderungen festgestellt.", inline=False)
+    
+    
+    perm_changes = []
+    for role in before.overwrites:
+        before_perm = before.overwrites.get(role, discord.PermissionOverwrite())
+        after_perm = after.overwrites.get(role, discord.PermissionOverwrite())
+        perm_diff = []
+
+        for perm in before_perm:
+            
+            perm_name = perm if isinstance(perm, str) else perm[0]  
+
+            if getattr(before_perm, perm_name) != getattr(after_perm, perm_name):
+                perm_diff.append(f"{perm_name}: `{getattr(before_perm, perm_name)}` ➔ `{getattr(after_perm, perm_name)}`")
+
+        if perm_diff:
+            perm_changes.append(f"**Rolle:** {role.name}\n" + "\n".join(perm_diff))
+
+    if perm_changes:
+        embed.add_field(name="Berechtigungsänderungen:", value="\n".join(perm_changes), inline=False)
+    else:
+        embed.add_field(name="Berechtigungsänderungen:", value="Keine Berechtigungsänderungen festgestellt.", inline=False)
+
+    
+    await log_channel.send(embed=embed)
+
+
 
 
 if __name__ == "__main__":
