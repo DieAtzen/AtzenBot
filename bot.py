@@ -2143,17 +2143,20 @@ async def restart(ctx):
     await bot.close()
     os.execv(sys.executable, ['python'] + sys.argv)
 
-@bot.event
-async def on_member_join(member):
-    channel = bot.get_channel(1264008994335363115)
+@bot.command(name='welcome')
+async def welcome(ctx, member: discord.Member):
+    channel = bot.get_channel(1264008994335363115)  # Kanal-ID hier einfügen
     if channel:
         embed = discord.Embed(
-            title="Willkommen, Atze!",
+            title="Willkommen, vollwärtiger Atze!",
             description=f"Hey {member.mention}, du bist nun endlich ein vollwärtiger Atze! Willkommen!",
             color=discord.Color.blue()
         )
-        embed.set_footer(text="Mach dich bereit für ein atziges Abenteuer!")
+        embed.set_thumbnail(url=member.avatar.url)
+        embed.set_footer(text="Made with ♥️ by Atzen Development")
         await channel.send(embed=embed)
+    else:
+        await ctx.send("Der Willkommenskanal wurde nicht gefunden.")
 
 
 
