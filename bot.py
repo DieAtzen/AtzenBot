@@ -2143,6 +2143,19 @@ async def restart(ctx):
     await bot.close()
     os.execv(sys.executable, ['python'] + sys.argv)
 
+@bot.event
+async def on_member_join(member):
+    channel = bot.get_channel(1264008994335363115)
+    if channel:
+        embed = discord.Embed(
+            title="Willkommen, Atze!",
+            description=f"Hey {member.mention}, du bist nun endlich ein vollwärtiger Atze! Willkommen!",
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text="Mach dich bereit für ein atziges Abenteuer!")
+        await channel.send(embed=embed)
+
+
 
 if __name__ == "__main__":
     bot.run(TOKEN)
