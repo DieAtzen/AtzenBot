@@ -2157,14 +2157,6 @@ async def welcome(ctx, member: discord.Member):
     else:
         await ctx.send("Der Willkommenskanal wurde nicht gefunden.")
 
-import discord
-from discord.ext import commands
-import random
-
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
-
 
 zitate = [
     "Nehmt mir diese Fotzenrolle weg, bevor ich dafür sorge, dass Nicolas persönlich bei euch vorbeikommt und euch die kleinen Minihoden so wund leckt, bis ihr trotzdem abspritzt ~ Roxas",
@@ -2178,6 +2170,7 @@ bilder = [
     "https://media.discordapp.net/attachments/1263982657969061961/1279523042191605782/IMG_0540.png?ex=66e7ddf1&is=66e68c71&hm=c6f6ac21b96f360a3f2ac027505934838af8a72e3f4b317416ab2eae18370653&=&format=webp&quality=lossless",
     "https://media.discordapp.net/attachments/1263982657969061961/1274422728115355738/image.png?ex=66e7c4e8&is=66e67368&hm=ffe34860c0521363f162c2f66d248d03adfde0707bd2407e8b398ee2c57afa1c&=&format=webp&quality=lossless"
 ]
+
 
 @bot.command(name='zitat')
 async def zitat(ctx):
