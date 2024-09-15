@@ -2142,6 +2142,17 @@ async def restart(ctx):
     await bot.close()
     os.execv(sys.executable, ['python'] + sys.argv)
 
+
+
+@bot.command(name='kevin')
+async def kevin(ctx):
+    message = (
+        "<@1075061561200226396> ist ein Hurensohn.\n"
+        "Diese Information wurde durch den General Atze verifiziert."
+    )
+    await ctx.send(message)
+
+
 @bot.command(name='welcome')
 async def welcome(ctx, member: discord.Member):
     channel = bot.get_channel(1264008994335363115)  # Kanal-ID hier einfügen
@@ -2206,7 +2217,6 @@ async def zitat(ctx):
         embed.set_footer(text="Made with ♥️ by Atzen Development")
 
     await ctx.send(embed=embed)
-
 
 if __name__ == "__main__":
     bot.run(TOKEN)
