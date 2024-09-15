@@ -2160,17 +2160,19 @@ async def welcome(ctx, member: discord.Member):
 
 zitate = [
     "Nehmt mir diese Fotzenrolle weg, bevor ich dafür sorge, dass Nicolas persönlich bei euch vorbeikommt und euch die kleinen Minihoden so wund leckt, bis ihr trotzdem abspritzt ~ Roxas",
-    "Ich schwör, Aamir Ibl kommt bei euch vorbei und macht euch zu seinen fetten Pakistani ~ Roxas"
+    "Ich schwör, Aamir Ibl kommt bei euch vorbei und macht euch zu seinen fetten Pakistani ~ Roxas",
+    "Digga, ich ramm' ihm den AliExpress-Dildo in den Arsch! ~ Fimo, 2024, gefärbt",
+    "Ich kann ihren Mund schon riechen ~ Michael"
 ]
 
 bilder = [
-    "https://media.discordapp.net/attachments/1263982657969061961/1283167250903470141/Screenshot_20240910_224742_Discord.jpg?ex=66e7f0e0&is=66e69f60&hm=2d9f8f716434bada04510b14647908736ce5ac33dc83b6deb5c680aae5960b29&=&format=webp&width=1431&height=551",
-    "https://media.discordapp.net/attachments/1263982657969061961/1283145657355468810/image0.jpg?ex=66e7dcc4&is=66e68b44&hm=fe974b32ca9488303013573e5f0090fcb8ac2b93cffe44f224448bffafc7a196&=&format=webp",
-    "https://media.discordapp.net/attachments/1263982657969061961/1282416597553778919/image.png?ex=66e7d8c7&is=66e68747&hm=30929b0711855c1db3ce50ced227f822d0fc8d166f6605893f048955798f5099&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1279523042191605782/IMG_0540.png?ex=66e7ddf1&is=66e68c71&hm=c6f6ac21b96f360a3f2ac027505934838af8a72e3f4b317416ab2eae18370653&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1274422728115355738/image.png?ex=66e7c4e8&is=66e67368&hm=ffe34860c0521363f162c2f66d248d03adfde0707bd2407e8b398ee2c57afa1c&=&format=webp&quality=lossless"
+    "https://media.discordapp.net/attachments/1263982657969061961/1267255080806252565/image.png?ex=66e80f83&is=66e6be03&hm=f975ba924e58c2aabad920a74a2360c5e494084aaee1424959983410a5990198&=&format=webp&quality=lossless",
+    "https://media.discordapp.net/attachments/1263982657969061961/1267451204888432650/IMG_0366.png?ex=66e81d6b&is=66e6cbeb&hm=da2a6ce1f9ed86bf0dd7465c561038c3cdc66b0760a960f6c5dc6eb9bb432f98&=&format=webp&quality=lossless&width=1431&height=157",
+    "https://media.discordapp.net/attachments/1263982657969061961/1268649094918967346/spadesayran.jpg?ex=66e7dbca&is=66e68a4a&hm=0b1ed21a94e083d1d0e537e16bf8655d2fca96188ba386496dd840d0bbdfae3d&=&format=webp",
+    "https://media.discordapp.net/attachments/1263982657969061961/1269031956293750877/IMG_0369.png?ex=66e7eedb&is=66e69d5b&hm=3f2e0f8651b7cf1313b00bf57b8efb8aba61c1a90e7cdcc1f588afc55082ebf3&=&format=webp&quality=lossless",
+    "https://media.discordapp.net/attachments/1263982657969061961/1272268738514915479/IMG_4478.png?ex=66e7d7d8&is=66e68658&hm=09c9d9057014832d2f39d68dd0efe230c9ced58299b4e9dc632bd2dc0c814ac1&=&format=webp&quality=lossless",
+    "https://media.discordapp.net/attachments/1263982657969061961/1272275518255005706/IMG_0378.png?ex=66e7de29&is=66e68ca9&hm=6dbfaf59fc6c7c4973c671e8fc9fff3039277eb738ed5c82a2f370f9dab88130&=&format=webp&quality=lossless&width=1431&height=321"
 ]
-
 
 @bot.command(name='zitat')
 async def zitat(ctx):
