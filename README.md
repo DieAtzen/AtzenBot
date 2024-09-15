@@ -10,5 +10,6 @@ Der "Die Atzen" Discord Bot. Dieser wird sämtliche wichtigen funktionen, welche
 - Benutzerdefiniertes
 - Roulette
 - Blackjack
+- Slash Commands (roleadd/roleremove)
 
                                                    Und vieles Mehr!
