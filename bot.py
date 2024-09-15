@@ -2169,79 +2169,7 @@ async def welcome(ctx, member: discord.Member):
         await ctx.send("Der Willkommenskanal wurde nicht gefunden.")
 
 
-zitate = [
-    "Nehmt mir diese Fotzenrolle weg, bevor ich dafür sorge, dass Nicolas persönlich bei euch vorbeikommt und euch die kleinen Minihoden so wund leckt, bis ihr trotzdem abspritzt ~ Roxas",
-    "Ich schwör, Aamir Ibl kommt bei euch vorbei und macht euch zu seinen fetten Pakistani ~ Roxas",
-    "Digga, ich ramm' ihm den AliExpress-Dildo in den Arsch! ~ Fimo, 2024, gefärbt",
-    "Ich kann ihren Mund schon riechen ~ Michael"
-]
 
-bilder = [
-    "https://media.discordapp.net/attachments/1263982657969061961/1283167250903470141/Screenshot_20240910_224742_Discord.jpg?ex=66e7f0e0&is=66e69f60&hm=2d9f8f716434bada04510b14647908736ce5ac33dc83b6deb5c680aae5960b29&=&format=webp&width=1431&height=551",
-    "https://media.discordapp.net/attachments/1263982657969061961/1283145657355468810/image0.jpg?ex=66e7dcc4&is=66e68b44&hm=fe974b32ca9488303013573e5f0090fcb8ac2b93cffe44f224448bffafc7a196&=&format=webp",
-    "https://media.discordapp.net/attachments/1263982657969061961/1282416597553778919/image.png?ex=66e7d8c7&is=66e68747&hm=30929b0711855c1db3ce50ced227f822d0fc8d166f6605893f048955798f5099&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1279523042191605782/IMG_0540.png?ex=66e7ddf1&is=66e68c71&hm=c6f6ac21b96f360a3f2ac027505934838af8a72e3f4b317416ab2eae18370653&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1274422728115355738/image.png?ex=66e7c4e8&is=66e67368&hm=ffe34860c0521363f162c2f66d248d03adfde0707bd2407e8b398ee2c57afa1c&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1267255080806252565/image.png?ex=66e80f83&is=66e6be03&hm=f975ba924e58c2aabad920a74a2360c5e494084aaee1424959983410a5990198&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1267451204888432650/IMG_0366.png?ex=66e81d6b&is=66e6cbeb&hm=da2a6ce1f9ed86bf0dd7465c561038c3cdc66b0760a960f6c5dc6eb9bb432f98&=&format=webp&quality=lossless&width=1431&height=157",
-    "https://media.discordapp.net/attachments/1263982657969061961/1268649094918967346/spadesayran.jpg?ex=66e7dbca&is=66e68a4a&hm=0b1ed21a94e083d1d0e537e16bf8655d2fca96188ba386496dd840d0bbdfae3d&=&format=webp",
-    "https://media.discordapp.net/attachments/1263982657969061961/1269031956293750877/IMG_0369.png?ex=66e7eedb&is=66e69d5b&hm=3f2e0f8651b7cf1313b00bf57b8efb8aba61c1a90e7cdcc1f588afc55082ebf3&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1272268738514915479/IMG_4478.png?ex=66e7d7d8&is=66e68658&hm=09c9d9057014832d2f39d68dd0efe230c9ced58299b4e9dc632bd2dc0c814ac1&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1272275518255005706/IMG_0378.png?ex=66e7de29&is=66e68ca9&hm=6dbfaf59fc6c7c4973c671e8fc9fff3039277eb738ed5c82a2f370f9dab88130&=&format=webp&quality=lossless&width=1431&height=321",
-    "https://media.discordapp.net/attachments/1244726161456500746/1284901367990714402/image.png?ex=66e85126&is=66e6ffa6&hm=5dcb13ae099f78286b6fcffd37bc642ab4c6cac50dfbc32e57f87203f93fabd6&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1201886124499279903/1260981938865438881/image.png?ex=66e84f72&is=66e6fdf2&hm=f41376132a51d98be352bd841426520a2de79639b87a2345b72449cc9c730c79&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284901791653429332/Screenshot_2024-09-15_174047.png?ex=66e8518b&is=66e7000b&hm=e3181741fac60230576d27d9ac7411810170e231f6edfded0ef170d0568186f3&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284901791888179385/Screenshot_2024-09-15_174029.png?ex=66e8518b&is=66e7000b&hm=5b025b7ccf418043d714c0025d4cb54b593a7ef872afdbf6dfc429122b593aea&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263975253600768001/1284902995858948107/image.png?ex=66e852aa&is=66e7012a&hm=f1487a943b39e9bd5ed5401ba88e0a0c69405fd8c2f57eb5562661ae9a30a741&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263975142636126218/1265039748754309190/Screenshot_310.png?ex=66e7e953&is=66e697d3&hm=fb352acc83c69f5a7d89feb2078bf732a7df6b3b90dda36221af798a1492700d&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1283167250903470141/Screenshot_20240910_224742_Discord.jpg?ex=66e7f0e0&is=66e69f60&hm=2d9f8f716434bada04510b14647908736ce5ac33dc83b6deb5c680aae5960b29&=&format=webp&width=1431&height=551",
-    "https://media.discordapp.net/attachments/1263982657969061961/1283145657355468810/image0.jpg?ex=66e7dcc4&is=66e68b44&hm=fe974b32ca9488303013573e5f0090fcb8ac2b93cffe44f224448bffafc7a196&=&format=webp",
-    "https://media.discordapp.net/attachments/1263982657969061961/1282416597553778919/image.png?ex=66e7d8c7&is=66e68747&hm=30929b0711855c1db3ce50ced227f822d0fc8d166f6605893f048955798f5099&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1279523042191605782/IMG_0540.png?ex=66e7ddf1&is=66e68c71&hm=c6f6ac21b96f360a3f2ac027505934838af8a72e3f4b317416ab2eae18370653&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1274422728115355738/image.png?ex=66e7c4e8&is=66e67368&hm=ffe34860c0521363f162c2f66d248d03adfde0707bd2407e8b398ee2c57afa1c&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1267255080806252565/image.png?ex=66e80f83&is=66e6be03&hm=f975ba924e58c2aabad920a74a2360c5e494084aaee1424959983410a5990198&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1267451204888432650/IMG_0366.png?ex=66e81d6b&is=66e6cbeb&hm=da2a6ce1f9ed86bf0dd7465c561038c3cdc66b0760a960f6c5dc6eb9bb432f98&=&format=webp&quality=lossless&width=1431&height=157",
-    "https://media.discordapp.net/attachments/1263982657969061961/1268649094918967346/spadesayran.jpg?ex=66e7dbca&is=66e68a4a&hm=0b1ed21a94e083d1d0e537e16bf8655d2fca96188ba386496dd840d0bbdfae3d&=&format=webp",
-    "https://media.discordapp.net/attachments/1263982657969061961/1269031956293750877/IMG_0369.png?ex=66e7eedb&is=66e69d5b&hm=3f2e0f8651b7cf1313b00bf57b8efb8aba61c1a90e7cdcc1f588afc55082ebf3&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1272268738514915479/IMG_4478.png?ex=66e7d7d8&is=66e68658&hm=09c9d9057014832d2f39d68dd0efe230c9ced58299b4e9dc632bd2dc0c814ac1&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1272275518255005706/IMG_0378.png?ex=66e7de29&is=66e68ca9&hm=6dbfaf59fc6b4f5e92c5f2f6ff092d457dba4349efee4d4dc2f10b16a3cfbcb9&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284908509162639443/makeitmeme_FbMIr.jpeg?ex=66e857cd&is=66e7064d&hm=482afc3d6ee6f3fb58e0069eac72f0bf49d9fd31d931f4a38ce90a66368a00f3&=&format=webp",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284908509435002991/makeitmeme_RMsjb.jpeg?ex=66e857cd&is=66e7064d&hm=09c23c57ff9174f6fa92f3dead7a75aed538b5f7ecd52a3e56aac4d990e44987&=&format=webp",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284908509690859530/makeitmeme_bo1lk.gif?ex=66e857cd&is=66e7064d&hm=3d9494b9b7f8061713d3fb2c33cc52ed666a26539ae0218d93988c08aae7b8d4&=",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284908511276433569/makeitmeme_9DcgI.jpeg?ex=66e857cd&is=66e7064d&hm=1df369efda83244a319f0e613efd75739a1651e197e868b0f948cd14168b7851&=&format=webp",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284908512324882563/makeitmeme_21wKE.gif?ex=66e857cd&is=66e7064d&hm=1607f0a28ee9abaaf618335a0d91185f78cf531299abf927329b5f5e09bb380c&=",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284908703362977863/9k.png?ex=66e857fb&is=66e7067b&hm=c7f96dc3521d4f8a75feeb491e02e9b9bcceac8e7e2ff6bfcf6b59c4b358c375&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284908703593791518/9k.png?ex=66e857fb&is=66e7067b&hm=185b16f79d4c47144775e4fec2da7ae64082d9a8997cf9e9c7e9994a3fe6e116&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284909127503577109/image.png?ex=66e85860&is=66e706e0&hm=02c7f972e71ef1434e83a61edc9535f6e169a9d4bde63ab5e3acd350b962b9fb&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284909127792853042/image.png?ex=66e85860&is=66e706e0&hm=f106453b5716bf341a8a50f39cf81f9595550676318b7ce86e342766c33446b5&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284909651518820444/image.png?ex=66e858dd&is=66e7075d&hm=7704740f60d08286df9e8b2bbc237278ba85d918be4b2d9b46e573f25b3390f8&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284909651801107456/image.png?ex=66e858dd&is=66e7075d&hm=1ac050275b4e6d02a2a07b6c7a0b5e06940fa8cb0383c024b79f0e8684a4172e&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284909748978145437/image.png?ex=66e858fb&is=66e7079b&hm=25a58a071e54a2a7b64d6a5a2348db59f02ea78c54164d58ac4bfc5ae14e8f8e&=&format=webp&quality=lossless",
-    "https://media.discordapp.net/attachments/1263982657969061961/1284909749256315905/image.png?ex=66e858fb&is=66e7079b&hm=4c951c233bb5f263a8d53b82ab4e594b08f12e3b8e48525a27e6e21b185ab691&=&format=webp&quality=lossless"
-]
-
-@bot.command(name='zitat')
-async def zitat(ctx):
-    if random.choice([True, False]):
-        
-        text = random.choice(zitate)
-        embed = discord.Embed(
-            title="Hier ist ein (geiles) Zitat für dich!",
-            description=text,
-            color=discord.Color.blue()
-        )
-        embed.set_footer(text="Made with ♥️ by Atzen Development")
-    else:
-        
-        url = random.choice(bilder)
-        embed = discord.Embed(
-            title="Hier ist ein (schmackhaftes) Zitat in Bildform für dich!",
-            color=discord.Color.blue()
-        )
-        embed.set_image(url=url)
-        embed.set_footer(text="Made with ♥️ by Atzen Development")
-
-    await ctx.send(embed=embed)
 
 if __name__ == "__main__":
     bot.run(TOKEN)
