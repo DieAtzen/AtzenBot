@@ -1,6 +1,7 @@
 import json
 import discord
 import asyncio
+import random
 import logging
 from datetime import datetime
 from discord.ext import commands
@@ -94,12 +95,13 @@ async def send_message(channel, content):
             await channel.send(content)
 
 
+
 @bot.command(name='roulette')
-async def roulette(ctx, bet_type: str = None):
-    if bet_type is None:
+async def roulette(ctx, bet: str = None):
+    if bet is None:
         embed = discord.Embed(
             title="Fehler beim Roulette",
-            description="Bitte gib eine Wettoption an. Beispiele: `red`, `black`, `even`, `odd`, `1-18`, `19-36`, `2to1`.",
+            description="Bitte gib eine Wettoption an. Beispiele: `red`, `black`, `even`, `odd`, `1-18`, `19-36`, `2to1`, oder eine Zahl von `0` bis `36`.",
             color=discord.Color.red()
         )
         embed.add_field(name="Verwendung", value="`!roulette <Wettoption>`", inline=False)
@@ -107,45 +109,53 @@ async def roulette(ctx, bet_type: str = None):
         await ctx.send(embed=embed)
         return
 
-    bet_type = bet_type.lower()
+    bet = bet.lower()
 
-    
+    # Definiere die möglichen Wettoptionen
     valid_bets = ['red', 'black', 'even', 'odd', '1-18', '19-36', '2to1']
-    if bet_type not in valid_bets:
+    if bet not in valid_bets and not bet.isdigit():
         embed = discord.Embed(
             title="Ungültige Wette",
-            description=f"Ungültige Wettoption. Bitte wähle eine der folgenden Optionen: {', '.join(valid_bets)}.",
+            description=f"Ungültige Wettoption. Bitte wähle eine der folgenden Optionen: {', '.join(valid_bets)}, oder eine Zahl von 0 bis 36.",
             color=discord.Color.red()
         )
         embed.set_footer(text="Bitte versuche es erneut.")
         await ctx.send(embed=embed)
         return
 
-    
+    # Generiere die gewonnene Zahl und die Farbe
     winning_number = random.randint(0, 36)
     colors = {0: 'green', 1: 'red', 2: 'black', 3: 'red', 4: 'black', 5: 'red', 6: 'black', 7: 'red', 8: 'black', 9: 'red', 10: 'black', 11: 'black', 12: 'red', 13: 'black', 14: 'red', 15: 'black', 16: 'red', 17: 'black', 18: 'red', 19: 'red', 20: 'black', 21: 'red', 22: 'black', 23: 'red', 24: 'black', 25: 'red', 26: 'black', 27: 'red', 28: 'black', 29: 'red', 30: 'black', 31: 'red', 32: 'black', 33: 'red', 34: 'black', 35: 'red', 36: 'black'}
     winning_color = colors.get(winning_number, 'green')
 
-    
-    if bet_type == 'red' and winning_color == 'red':
+    # Überprüfe die Wette
+    if bet.isdigit():
+        bet_number = int(bet)
+        if bet_number == winning_number:
+            result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number}. Du hast gewonnen!"
+            color = discord.Color.green()
+        else:
+            result = f"Leider verloren. Die gewonnene Zahl war {winning_number}."
+            color = discord.Color.red()
+    elif bet == 'red' and winning_color == 'red':
         result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (Rot). Du hast gewonnen!"
         color = discord.Color.green()
-    elif bet_type == 'black' and winning_color == 'black':
+    elif bet == 'black' and winning_color == 'black':
         result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (Schwarz). Du hast gewonnen!"
         color = discord.Color.green()
-    elif bet_type == 'even' and winning_number % 2 == 0 and winning_number != 0:
+    elif bet == 'even' and winning_number % 2 == 0 and winning_number != 0:
         result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (Gerade). Du hast gewonnen!"
         color = discord.Color.green()
-    elif bet_type == 'odd' and winning_number % 2 != 0:
+    elif bet == 'odd' and winning_number % 2 != 0:
         result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (Ungerade). Du hast gewonnen!"
         color = discord.Color.green()
-    elif bet_type == '1-18' and 1 <= winning_number <= 18:
+    elif bet == '1-18' and 1 <= winning_number <= 18:
         result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (1-18). Du hast gewonnen!"
         color = discord.Color.green()
-    elif bet_type == '19-36' and 19 <= winning_number <= 36:
+    elif bet == '19-36' and 19 <= winning_number <= 36:
         result = f"Herzlichen Glückwunsch! Die gewonnene Zahl ist {winning_number} (19-36). Du hast gewonnen!"
         color = discord.Color.green()
-    elif bet_type == '2to1':
+    elif bet == '2to1':
         two_to_one = (winning_number % 3) + 1
         result = f"Die gewonnene Zahl ist {winning_number}. Du hast auf die 2 zu 1 gesetzt und gewonnen, wenn die Zahl 1, 2 oder 3 ist!"
         if two_to_one == 1:
@@ -157,7 +167,7 @@ async def roulette(ctx, bet_type: str = None):
         result = f"Leider verloren. Die gewonnene Zahl war {winning_number}."
         color = discord.Color.red()
 
-    
+    # Erstelle und sende das Embed
     embed = discord.Embed(
         title="Roulette-Ergebnis",
         description=result,
