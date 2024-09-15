@@ -2180,7 +2180,7 @@ async def zitat(ctx):
         
         text = random.choice(zitate)
         embed = discord.Embed(
-            title="Hier ist ein Zitat für dich!",
+            title="Hier ist ein (geiles) Zitat für dich!",
             description=text,
             color=discord.Color.blue()
         )
@@ -2189,7 +2189,7 @@ async def zitat(ctx):
         
         url = random.choice(bilder)
         embed = discord.Embed(
-            title="Hier ist ein Bild für dich!",
+            title="Hier ist ein (schmackhaftes) Zitat in Bildform für dich!",
             color=discord.Color.blue()
         )
         embed.set_image(url=url)
