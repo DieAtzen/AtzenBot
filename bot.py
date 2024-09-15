@@ -1,4 +1,6 @@
 import json
+import os
+import sys
 import discord
 import asyncio
 import random
@@ -7,7 +9,7 @@ from datetime import datetime
 from discord.ext import commands
 from discord import app_commands
 
-# Config
+
 TOKEN = ""
 MUTE_ROLE_ID = 1284531978284171275
 LOG_CHANNEL_ID = 1269261771953147925
@@ -23,7 +25,7 @@ ALLOWED_ROLE_IDS = [
 
 logging.basicConfig(level=logging.INFO)
 
-# Intents
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -35,6 +37,74 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 
 bot.remove_command('help')
+
+def load_data():
+    coins = load_coins()
+    user_data = load_user_data()
+    warns = load_warns()
+    return {
+        'coins': coins,
+        'user_data': user_data,
+        'warns': warns
+    }
+
+def save_data(data):
+    save_coins(data.get('coins', {}))
+    save_user_data(data.get('user_data', {}))
+    save_warns(data.get('warns', {}))
+
+
+COINS_FILE = 'coins.json'
+USER_DATA_FILE = 'user_data.json'
+WARNINGS_FILE = 'data.json'
+
+
+def load_coins():
+    try:
+        with open(COINS_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        print("Fehler beim Lesen der Coins-Datei")
+        return {}
+
+
+def save_coins(data):
+    with open(COINS_FILE, 'w') as file:
+        json.dump(data, file, indent=4)
+
+
+def load_user_data():
+    try:
+        with open(USER_DATA_FILE, 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        print("Fehler beim Lesen der Benutzerdaten-Datei")
+        return {}
+
+
+def save_user_data(data):
+    with open(USER_DATA_FILE, 'w') as file:
+        json.dump(data, file, indent=4)
+
+
+def load_warns():
+    try:
+        with open(WARNINGS_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {'warns': {}}
+    except json.JSONDecodeError:
+        print("Fehler beim Lesen der Warnungen-Datei")
+        return {'warns': {}}
+
+
+def save_warns(data):
+    with open(WARNINGS_FILE, 'w') as file:
+        json.dump(data, file, indent=4)
 
 @bot.command(name='help')
 async def help_command(ctx):
@@ -50,7 +120,7 @@ async def help_command(ctx):
         'unwarn': 'Hebt eine Warnung für ein Mitglied auf. Beispiel: `!unwarn @Benutzer Grund`.',
         'cases': 'Zeigt alle offenen Warnungen und Fälle für einen Benutzer an. Beispiel: `!cases @Benutzer`.',
         'mute': 'Stummschaltet ein Mitglied für eine bestimmte Dauer. Beispiel: `!mute @Benutzer 10m Grund`.',
-        'ban': 'Bann ein Mitglied vom Server. Beispiel: `!ban @Benutzer Grund`.',
+        'ban': 'Bannt ein Mitglied vom Server. Beispiel: `!ban @Benutzer Grund`.',
         'unban': 'Hebt den Bann eines Mitglieds auf. Beispiel: `!unban BenutzerID Grund`.',
         'purge': 'Löscht eine bestimmte Anzahl von Nachrichten in einem Kanal. Beispiel: `!purge 10`.',
         'embed': 'Sendet eine benutzerdefinierte Embed-Nachricht. Beispiel: `!embed Titel | Beschreibung`.',
@@ -62,7 +132,7 @@ async def help_command(ctx):
 
     embed_general.set_footer(text="Made with ♥️ by Atzen Development")
     
-    
+    # Casino-Befehle
     embed_casino = discord.Embed(
         title="Casino Befehle",
         description="Hier sind die Casino Commands.",
@@ -74,7 +144,7 @@ async def help_command(ctx):
         'daily': 'Daily Coins abholen: `!daily`.',
         'map': 'Zeigt die Roulette Map an: `!map`.',
         'bank': 'Zeigt den Kontostand an: `!bank`.',
-        'bj': 'abfahrt Blackjack: `!bj`.',
+        'bj': 'Abfahrt Blackjack: `!bj`.',
     }
 
     for command, description in casino_list.items():
@@ -82,9 +152,27 @@ async def help_command(ctx):
 
     embed_casino.set_footer(text="Made with ♥️ by Atzen Development")
     
+    # Admin-Befehle
+    embed_admin = discord.Embed(
+        title="Admin Befehle",
+        description="Diese Befehle sind nur für Administratoren zugänglich.",
+        color=discord.Color.red()
+    )
+
+    admin_list = {
+        'restart': 'Speichert alle Daten und startet den Bot neu. Beispiel: `!restart`.',
+        'shutdown': 'Speichert alle Daten und fährt den Bot herunter. Beispiel: `!shutdown`.',
+    }
+
+    for command, description in admin_list.items():
+        embed_admin.add_field(name=f'!{command}', value=description, inline=False)
+
+    embed_admin.set_footer(text="Achtung: Nur Admins können diese Befehle ausführen!")
     
+    # Send all embeds
     await ctx.send(embed=embed_general)
     await ctx.send(embed=embed_casino)
+    await ctx.send(embed=embed_admin)
 
 
 
@@ -225,20 +313,6 @@ COINS_FILE = 'coins.json'
 USER_DATA_FILE = 'user_data.json'
 
 
-def load_coins():
-    try:
-        with open(COINS_FILE, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
-    except json.JSONDecodeError:
-        print("Fehler beim Lesen der Coins-Datei")
-        return {}
-
-def save_coins(data):
-    with open(COINS_FILE, 'w') as file:
-        json.dump(data, file, indent=4)
-
 @bot.command(name='daily')
 async def daily(ctx):
     coins_data = load_coins()
@@ -273,24 +347,6 @@ async def daily(ctx):
         embed.set_thumbnail(url="https://as1.ftcdn.net/v2/jpg/01/44/33/66/1000_F_144336685_lIKJEs8RzqhbpOwCycZTsFT0Eywxl41M.jpg")
         embed.set_footer(text="Made with ♥️ by Atzen Development")
         await ctx.send(embed=embed)
-
-def load_user_data(user_id):
-    try:
-        with open('user_data.json', 'r') as file:
-            data = json.load(file)
-        return data.get(str(user_id), {'coins': 0})
-    except FileNotFoundError:
-        return {'coins': 0}
-
-def save_user_data(user_id, user_data):
-    try:
-        with open('user_data.json', 'r') as file:
-            data = json.load(file)
-    except FileNotFoundError:
-        data = {}
-    data[str(user_id)] = user_data
-    with open('user_data.json', 'w') as file:
-        json.dump(data, file)
 
 @bot.command(name='bank')
 async def bank(ctx):
@@ -823,20 +879,6 @@ LOG_CHANNEL_ID = 1269261771953147925
 
 print("Lade Daten...")
 
-def load_data():
-    try:
-        with open('data.json', 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {'warns': {}}
-    except json.JSONDecodeError:
-        print("Fehler beim Lesen der JSON-Datei")
-        return {'warns': {}}
-
-def save_data(data):
-    with open('data.json', 'w') as file:
-        json.dump(data, file, indent=4)
-
 data = load_data()
 print("Daten geladen:", data)
 
@@ -961,62 +1003,90 @@ async def unwarn(ctx, member: discord.Member, *, reason: str):
 
 
 @bot.command(name='cases')
-async def cases(ctx, member: discord.Member):
-    if not member:
+async def cases(ctx, member: discord.Member = None):
+    if member is None:
         embed = discord.Embed(
-            title="Fehler beim Abrufen der Warnungen",
-            description="Der Befehl ist nicht korrekt verwendet worden.",
-            color=discord.Color.red()
-        )
-        embed.add_field(name="Verwendung", value="`!cases <Mitglied>`", inline=False)
-        embed.set_footer(text="Bitte gib ein Mitglied an.")
-        await ctx.send(embed=embed)
-        return
-
-    try:
-        user_id = str(member.id)
-        warns = data['warns'].get(user_id, [])
-        embed = discord.Embed(
-            title=f"Warnungen für {member}",
+            title="Alle Warnungen des Servers",
+            description="Hier sind alle Warnungen des Servers aufgelistet.",
             color=discord.Color.blue()
         )
-        embed.set_thumbnail(url=member.avatar.url)
-
-        if warns:
-            for i, warn in enumerate(warns, 1):
-                if isinstance(warn, dict):
-                    reason = warn.get('reason', 'Keine Angabe')
-                    author_id = warn.get('author')
-
-                    if author_id:
-                        try:
-                            author = await bot.fetch_user(author_id)
-                            author_mention = author.mention
-                        except discord.NotFound:
-                            author_mention = "Unbekannt"
+        try:
+            
+            server_warns = load_coins().get('warns', {})
+            if not server_warns:
+                embed.add_field(name="Keine Warnungen", value="Es gibt keine Warnungen auf diesem Server.", inline=False)
+            else:
+                for user_id, warns in server_warns.items():
+                    user = await bot.fetch_user(int(user_id))
+                    warn_texts = []
+                    if warns:
+                        for warn in warns:
+                            if isinstance(warn, dict):
+                                reason = warn.get('reason', 'Keine Angabe')
+                                author_id = warn.get('author')
+                                author_mention = f"<@{author_id}>" if author_id else "Unbekannt"
+                                archived = "Archiviert" if warn.get('archived') else "Offen"
+                                warn_texts.append(f"Grund: {reason}\nAutor: {author_mention}\nStatus: {archived}")
+                            else:
+                                warn_texts.append(f"Grund: {warn}")
+                        embed.add_field(name=f"Warnungen für {user}", value="\n".join(warn_texts), inline=False)
                     else:
-                        author_mention = "Unbekannt"
+                        embed.add_field(name=f"Warnungen für {user}", value="Keine Warnungen", inline=False)
+        except Exception as e:
+            embed = discord.Embed(
+                title="Fehler beim Abrufen der Warnungen",
+                description=f"Beim Abrufen der Server-Warnungen ist ein Fehler aufgetreten: {str(e)}",
+                color=discord.Color.red()
+            )
+            embed.set_footer(text="Bitte versuche es später erneut.")
+            await ctx.send(embed=embed)
+            print(f"Fehler beim Ausführen des Cases-Befehls: {e}")
+            return
 
-                    archived = "Archiviert" if warn.get('archived') else "Offen"
-                    embed.add_field(name=f"Warnung {i}", value=f"Grund: {reason}\nAutor: {author_mention}\nStatus: {archived}", inline=False)
-                else:
-                    embed.add_field(name=f"Warnung {i}", value=f"Grund: {warn}", inline=False)
-        else:
-            embed.add_field(name="Keine Warnungen", value=f"{member.mention} hat keine Warnungen.", inline=False)
+    else:
+        try:
+            user_id = str(member.id)
+            warns = data.get('warns', {}).get(user_id, [])
+            embed = discord.Embed(
+                title=f"Warnungen für {member}",
+                color=discord.Color.blue()
+            )
+            embed.set_thumbnail(url=member.avatar.url)
 
-        embed.set_footer(text="Made with ♥️ by Atzen Development")
+            if warns:
+                for i, warn in enumerate(warns, 1):
+                    if isinstance(warn, dict):
+                        reason = warn.get('reason', 'Keine Angabe')
+                        author_id = warn.get('author')
 
-        await ctx.send(embed=embed)
+                        if author_id:
+                            try:
+                                author = await bot.fetch_user(author_id)
+                                author_mention = author.mention
+                            except discord.NotFound:
+                                author_mention = "Unbekannt"
+                        else:
+                            author_mention = "Unbekannt"
 
-    except Exception as e:
-        embed = discord.Embed(
-            title="Fehler beim Abrufen der Warnungen",
-            description=f"Beim Ausführen des Cases-Befehls ist ein Fehler aufgetreten: {str(e)}",
-            color=discord.Color.red()
-        )
-        embed.set_footer(text="Bitte überprüfe den Befehl und versuche es erneut.")
-        await ctx.send(embed=embed)
-        print(f"Fehler beim Ausführen des Cases-Befehls: {e}")
+                        archived = "Archiviert" if warn.get('archived') else "Offen"
+                        embed.add_field(name=f"Warnung {i}", value=f"Grund: {reason}\nAutor: {author_mention}\nStatus: {archived}", inline=False)
+                    else:
+                        embed.add_field(name=f"Warnung {i}", value=f"Grund: {warn}", inline=False)
+            else:
+                embed.add_field(name="Keine Warnungen", value=f"{member.mention} hat keine Warnungen.", inline=False)
+
+            embed.set_footer(text="Made with ♥️ by Atzen Development")
+            await ctx.send(embed=embed)
+
+        except Exception as e:
+            embed = discord.Embed(
+                title="Fehler beim Abrufen der Warnungen",
+                description=f"Beim Ausführen des Cases-Befehls ist ein Fehler aufgetreten: {str(e)}",
+                color=discord.Color.red()
+            )
+            embed.set_footer(text="Bitte überprüfe den Befehl und versuche es erneut.")
+            await ctx.send(embed=embed)
+            print(f"Fehler beim Ausführen des Cases-Befehls: {e}")
 
 
 @bot.command()
@@ -1962,6 +2032,91 @@ async def on_guild_channel_update(before, after):
     await log_channel.send(embed=embed)
 
 
+data = load_warns()  
+user_data = load_user_data()  
+coins_data = load_coins()  
+
+ALLOWED_USER_IDS = [1004744186966311022, 651140457648357377]
+
+@bot.command(name='shutdown')
+async def shutdown(ctx):
+    if ctx.author.id not in ALLOWED_USER_IDS:
+        embed = discord.Embed(
+            title="Zugriffs verweigert",
+            description="Du hast keine Berechtigung, diesen Befehl auszuführen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Bitte kontaktiere einen Administrator, wenn du denkst, dass dies ein Fehler ist.")
+        await ctx.send(embed=embed)
+        return
+
+    
+    print("Speichere Daten...")
+    coins_data = load_coins()
+    save_coins(coins_data)
+    
+    user_data = load_user_data()
+    save_user_data(user_data)
+    
+    warns_data = load_warns()
+    save_warns(warns_data)
+    
+    
+    print(f"Bot wurde heruntergefahren von:\nUsername: {ctx.author.name}\nAnzeigename: {ctx.author.display_name}\nUserID: {ctx.author.id}")
+    
+    embed = discord.Embed(
+        title="Bot wird heruntergefahren",
+        description="Alle Daten wurden gespeichert. Der Bot wird nun heruntergefahren.",
+        color=discord.Color.green()
+    )
+    embed.set_footer(text="Danke, dass du den Bot benutzt.")
+    await ctx.send(embed=embed)
+
+    await bot.close()
+
+    data = load_warns()  
+user_data = load_user_data()  
+coins_data = load_coins()  
+
+ALLOWED_USER_IDS = [1004744186966311022, 651140457648357377]
+
+@bot.command(name='restart')
+async def restart(ctx):
+    if ctx.author.id not in ALLOWED_USER_IDS:
+        embed = discord.Embed(
+            title="Zugriffs verweigert",
+            description="Du hast keine Berechtigung, diesen Befehl auszuführen.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Bitte kontaktiere einen Administrator, wenn du denkst, dass dies ein Fehler ist.")
+        await ctx.send(embed=embed)
+        return
+
+    
+    print("Speichere Daten...")
+    coins_data = load_coins()
+    save_coins(coins_data)
+    
+    user_data = load_user_data()
+    save_user_data(user_data)
+    
+    warns_data = load_warns()
+    save_warns(warns_data)
+    
+    
+    print(f"Bot wird neu gestartet von:\nUsername: {ctx.author.name}\nAnzeigename: {ctx.author.display_name}\nUserID: {ctx.author.id}")
+    
+    embed = discord.Embed(
+        title="Bot wird neu gestartet",
+        description="Alle Daten wurden gespeichert. Der Bot wird nun neu gestartet.",
+        color=discord.Color.green()
+    )
+    embed.set_footer(text="Danke, dass du den Bot benutzt.")
+    await ctx.send(embed=embed)
+
+    
+    await bot.close()
+    os.execv(sys.executable, ['python'] + sys.argv)
 
 
 if __name__ == "__main__":
