@@ -896,6 +896,7 @@ def kürze_feldwert(text):
     return (text[:1024] + '...') if len(text) > 1024 else text
 
 @bot.command(name='warn')
+@commands.has_permissions(manage_messages=True, manage_roles=True)
 async def warn(ctx, member: discord.Member, *, reason: str):
     if not member or not reason:
         embed = discord.Embed(
@@ -909,6 +910,10 @@ async def warn(ctx, member: discord.Member, *, reason: str):
         return
 
     try:
+        # Sicherstellen, dass der 'warns'-Key existiert
+        if 'warns' not in data:
+            data['warns'] = {}
+
         user_id = str(member.id)
         if user_id not in data['warns']:
             data['warns'][user_id] = []
@@ -943,6 +948,7 @@ async def warn(ctx, member: discord.Member, *, reason: str):
 
 
 @bot.command(name='unwarn')
+@commands.has_permissions(manage_messages=True, manage_roles=True)
 async def unwarn(ctx, member: discord.Member, *, reason: str):
     if not member or not reason:
         embed = discord.Embed(
@@ -1005,6 +1011,20 @@ async def unwarn(ctx, member: discord.Member, *, reason: str):
         embed.set_footer(text="Bitte überprüfe den Befehl und versuche es erneut.")
         await ctx.send(embed=embed)
         print(f"Fehler beim Ausführen des Unwarnbefehls: {e}")
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        embed = discord.Embed(
+            title="Fehlende Berechtigungen",
+            description="Du benötigst die Berechtigung **Nachrichten verwalten** oder **Rollen verwalten**, um diesen Befehl auszuführen.",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed)
+    else:
+        raise error
+
 
 
 @bot.command(name='cases')
