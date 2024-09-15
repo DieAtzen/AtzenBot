@@ -18,15 +18,16 @@ ALLOWED_ROLE_IDS = [
     1282416647612792963
 ]
 
+
 logging.basicConfig(level=logging.INFO)
+
+# Intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 intents.messages = True
 intents.reactions = True
 intents.guilds = True
-intents.guild_messages = True
-intents.guild_reactions = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)  
 
@@ -332,15 +333,9 @@ async def purge_error(ctx, error):
     await ctx.send(embed=embed)
 
 
-
-@bot.command(name='github')
-async def github(ctx):
-    github_url = "https://github.com/DieAtzen/AtzenBot/"
-    await ctx.send(f"Hier ist der Link zu unserem GitHub-Repository: {github_url}")
-    await ctx.author.send(f"Hier ist der Link zu unserem GitHub-Repository: {github_url}")
-
 warns = {}
 archived_warns = {}
+LOG_CHANNEL_ID = 1269261771953147925  
 
 print("Lade Daten...")
 
@@ -355,21 +350,38 @@ def load_data():
         return {'warns': {}}
 
 def save_data(data):
-    with open('data.json', 'w') as f:
-        json.dump(data, f, indent=4)
+    with open('data.json', 'w') as file:
+        json.dump(data, file, indent=4)
 
 data = load_data()
-
 print("Daten geladen:", data)
+
+async def log_in_kanal(bot, embed):
+    log_channel = bot.get_channel(LOG_CHANNEL_ID)
+    if log_channel:
+        await log_channel.send(embed=embed)
+
+def kürze_feldwert(text):
+    return (text[:1024] + '...') if len(text) > 1024 else text
 
 @bot.command(name='warn')
 async def warn(ctx, member: discord.Member, *, reason: str):
+    if not member or not reason:
+        embed = discord.Embed(
+            title="Fehler beim Warnen",
+            description="Der Befehl ist nicht korrekt verwendet worden.",
+            color=discord.Color.red()
+        )
+        embed.add_field(name="Verwendung", value="`!warn <Mitglied> <Grund>`", inline=False)
+        embed.set_footer(text="Bitte gib sowohl ein Mitglied als auch einen Grund an.")
+        await ctx.send(embed=embed)
+        return
+
     try:
         user_id = str(member.id)
         if user_id not in data['warns']:
             data['warns'][user_id] = []
 
-        
         data['warns'][user_id].append({
             'reason': reason,
             'author': ctx.author.id,
@@ -377,85 +389,46 @@ async def warn(ctx, member: discord.Member, *, reason: str):
         })
         save_data(data)
 
-        
         embed = discord.Embed(
             title=f"Warnung für {member}",
-            description=f"Grund: {reason}",
+            description=f"Grund: {reason}\nAutor: {ctx.author.mention}",
             color=discord.Color.red()
         )
-        
-        
         embed.set_thumbnail(url=member.avatar.url)
-        
-        
         embed.set_footer(text="Made with ♥️ by Atzen Development")
 
-        log_channel = bot.get_channel(1269261771953147925)
-        await log_channel.send(embed=embed)
-
+        await log_in_kanal(bot, embed)
         await ctx.send(embed=embed)
 
     except Exception as e:
-        await ctx.send(f"Beim Ausführen des Warnbefehls ist ein Fehler aufgetreten: {str(e)}")
+        embed = discord.Embed(
+            title="Fehler beim Warnen",
+            description=f"Beim Ausführen des Warnbefehls ist ein Fehler aufgetreten: {str(e)}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Bitte überprüfe den Befehl und versuche es erneut.")
+        await ctx.send(embed=embed)
         print(f"Fehler beim Ausführen des Warnbefehls: {e}")
 
 
-def validate_warns(data):
-    if 'warns' not in data:
-        data['warns'] = {}
-    for user_id, warns in data['warns'].items():
-        if not isinstance(warns, list):
-            data['warns'][user_id] = []
-        for i, warn in enumerate(warns):
-            if not isinstance(warn, dict):
-                data['warns'][user_id][i] = {'reason': 'Unknown', 'author': None, 'archived': False}
-            else:
-                if 'reason' not in warn:
-                    warn['reason'] = 'Unknown'
-                if 'author' not in warn:
-                    warn['author'] = None
-                if 'archived' not in warn:
-                    warn['archived'] = False
-
-def save_data(data):
-    with open('data.json', 'w') as file:
-        json.dump(data, file, indent=4)
-
-def load_data():
-    try:
-        with open('data.json', 'r') as file:
-            data = json.load(file)
-    except FileNotFoundError:
-        data = {'warns': {}, 'archived_warns': {}}
-    return data
-
-def validate_warns(data):
-    if 'warns' not in data:
-        data['warns'] = {}
-    for user_id, warns in data['warns'].items():
-        if not isinstance(warns, list):
-            data['warns'][user_id] = []
-        for i, warn in enumerate(warns):
-            if not isinstance(warn, dict):
-                data['warns'][user_id][i] = {'reason': 'Unknown', 'author': None, 'archived': False}
-            else:
-                if 'reason' not in warn:
-                    warn['reason'] = 'Unknown'
-                if 'author' not in warn:
-                    warn['author'] = None
-                if 'archived' not in warn:
-                    warn['archived'] = False
-
-data = load_data()
-validate_warns(data)
-
 @bot.command(name='unwarn')
 async def unwarn(ctx, member: discord.Member, *, reason: str):
+    if not member or not reason:
+        embed = discord.Embed(
+            title="Fehler beim Entfernen der Warnung",
+            description="Der Befehl ist nicht korrekt verwendet worden.",
+            color=discord.Color.red()
+        )
+        embed.add_field(name="Verwendung", value="`!unwarn <Mitglied> <Grund>`", inline=False)
+        embed.set_footer(text="Bitte gib sowohl ein Mitglied als auch einen Grund an.")
+        await ctx.send(embed=embed)
+        return
+
     try:
         user_id = str(member.id)
         if user_id in data['warns']:
             warns = data['warns'][user_id]
-            
+
             for warn in warns:
                 if isinstance(warn, dict) and warn.get('reason') == reason:
                     warns.remove(warn)
@@ -463,40 +436,59 @@ async def unwarn(ctx, member: discord.Member, *, reason: str):
                         del data['warns'][user_id]
                     save_data(data)
 
-                    
                     embed = discord.Embed(
                         title=f"Warnung für {member}",
-                        description=f"Grund: {reason} wurde aufgehoben",
+                        description=f"Grund: {reason} wurde aufgehoben\nAutor: {ctx.author.mention}",
                         color=discord.Color.green()
                     )
-                    
-                    
                     embed.set_thumbnail(url=member.avatar.url)
-                    
-                    
                     embed.set_footer(text="Made with ♥️ by Atzen Development")
 
-                    log_channel = bot.get_channel(1269261771953147925)
-                    await log_channel.send(embed=embed)
-
+                    await log_in_kanal(bot, embed)
                     await ctx.send(embed=embed)
                     return
-            
-            await ctx.send(f"{member.mention} hat keine Warnung mit dem Grund '{reason}'.")
+
+            embed = discord.Embed(
+                title="Keine passende Warnung gefunden",
+                description=f"{member.mention} hat keine Warnung mit dem Grund '{reason}'.",
+                color=discord.Color.red()
+            )
+            embed.set_footer(text="Bitte überprüfe den Grund und versuche es erneut.")
+            await ctx.send(embed=embed)
 
         else:
-            await ctx.send(f"{member.mention} hat keine Warnungen.")
+            embed = discord.Embed(
+                title="Keine Warnungen gefunden",
+                description=f"{member.mention} hat keine Warnungen.",
+                color=discord.Color.red()
+            )
+            embed.set_footer(text="Bitte überprüfe das Mitglied und versuche es erneut.")
+            await ctx.send(embed=embed)
 
     except Exception as e:
-        await ctx.send(f"Beim Ausführen des Unwarnbefehls ist ein Fehler aufgetreten: {str(e)}")
+        embed = discord.Embed(
+            title="Fehler beim Entfernen der Warnung",
+            description=f"Beim Ausführen des Unwarnbefehls ist ein Fehler aufgetreten: {str(e)}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Bitte überprüfe den Befehl und versuche es erneut.")
+        await ctx.send(embed=embed)
         print(f"Fehler beim Ausführen des Unwarnbefehls: {e}")
-
-
-
 
 
 @bot.command(name='cases')
 async def cases(ctx, member: discord.Member):
+    if not member:
+        embed = discord.Embed(
+            title="Fehler beim Abrufen der Warnungen",
+            description="Der Befehl ist nicht korrekt verwendet worden.",
+            color=discord.Color.red()
+        )
+        embed.add_field(name="Verwendung", value="`!cases <Mitglied>`", inline=False)
+        embed.set_footer(text="Bitte gib ein Mitglied an.")
+        await ctx.send(embed=embed)
+        return
+
     try:
         user_id = str(member.id)
         warns = data['warns'].get(user_id, [])
@@ -504,17 +496,14 @@ async def cases(ctx, member: discord.Member):
             title=f"Warnungen für {member}",
             color=discord.Color.blue()
         )
-        
         embed.set_thumbnail(url=member.avatar.url)
 
-        
         if warns:
             for i, warn in enumerate(warns, 1):
                 if isinstance(warn, dict):
                     reason = warn.get('reason', 'Keine Angabe')
                     author_id = warn.get('author')
-                    
-                    
+
                     if author_id:
                         try:
                             author = await bot.fetch_user(author_id)
@@ -531,18 +520,19 @@ async def cases(ctx, member: discord.Member):
         else:
             embed.add_field(name="Keine Warnungen", value=f"{member.mention} hat keine Warnungen.", inline=False)
 
-        
         embed.set_footer(text="Made with ♥️ by Atzen Development")
 
         await ctx.send(embed=embed)
 
     except Exception as e:
-        await ctx.send(f"Beim Ausführen des Cases-Befehls ist ein Fehler aufgetreten: {str(e)}")
+        embed = discord.Embed(
+            title="Fehler beim Abrufen der Warnungen",
+            description=f"Beim Ausführen des Cases-Befehls ist ein Fehler aufgetreten: {str(e)}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Bitte überprüfe den Befehl und versuche es erneut.")
+        await ctx.send(embed=embed)
         print(f"Fehler beim Ausführen des Cases-Befehls: {e}")
-
-
-
-
 
 
 @bot.command()
@@ -1143,7 +1133,7 @@ async def on_message_edit(before, after):
         return
 
     if before.content == after.content and not before.attachments and not after.attachments:
-        return  # Keine Bearbeitung bei reinem Text oder gleichem Inhalt
+        return  
 
     embed = discord.Embed(
         title="✏️ Nachricht bearbeitet",
@@ -1151,14 +1141,14 @@ async def on_message_edit(before, after):
         color=discord.Color.orange()
     )
 
-    # Vorherigen Inhalt prüfen
+    
     if before.content:
         embed.add_field(name="Vorher", value=f"```{kürze_feldwert(before.content)}```", inline=False)
     if before.attachments:
         attachment_urls = [attachment.url for attachment in before.attachments]
         embed.add_field(name="Vorherige Anhänge", value="\n".join(attachment_urls), inline=False)
 
-    # Nachfolgenden Inhalt prüfen
+    
     if after.content:
         embed.add_field(name="Nachher", value=f"```{kürze_feldwert(after.content)}```", inline=False)
     if after.attachments:
@@ -1181,13 +1171,7 @@ async def on_message_delete(message):
         description=f"Eine Nachricht von {message.author.mention} wurde gelöscht.",
         color=discord.Color.red()
     )
-
-    if message.content:
-        embed.add_field(name="Inhalt", value=f"```{kürze_feldwert(message.content)}```", inline=False)
-    if message.attachments:
-        attachment_urls = [attachment.url for attachment in message.attachments]
-        embed.add_field(name="Anhänge", value="\n".join(attachment_urls), inline=False)
-
+    embed.add_field(name="Inhalt", value=f"```{kürze_feldwert(message.content)}```", inline=False)
     embed.set_footer(text=f"ID: {message.id}", icon_url=message.author.display_avatar.url)
     embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
     embed.set_thumbnail(url=message.author.display_avatar.url)
