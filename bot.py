@@ -126,6 +126,8 @@ async def help_command(ctx):
         'purge': 'Löscht eine bestimmte Anzahl von Nachrichten in einem Kanal. Beispiel: `!purge 10`.',
         'embed': 'Sendet eine benutzerdefinierte Embed-Nachricht. Beispiel: `!embed Titel | Beschreibung`.',
         'poll': 'Startet eine Umfrage. Beispiel: `!poll single 10 Frage | Option1, Option2`.',
+        'zitat': 'Zeigt ein Random Zitat an Beispiel: `!zitat`.',
+        'füße': 'schickt FußFoto `!füße`.',
     }
 
     for command, description in commands_list.items():
@@ -133,7 +135,7 @@ async def help_command(ctx):
 
     embed_general.set_footer(text="Made with ♥️ by Atzen Development")
     
-    # Casino-Befehle
+    
     embed_casino = discord.Embed(
         title="Casino Befehle",
         description="Hier sind die Casino Commands.",
@@ -153,7 +155,7 @@ async def help_command(ctx):
 
     embed_casino.set_footer(text="Made with ♥️ by Atzen Development")
     
-    # Admin-Befehle
+    
     embed_admin = discord.Embed(
         title="Admin Befehle",
         description="Diese Befehle sind nur für Administratoren zugänglich.",
@@ -170,7 +172,7 @@ async def help_command(ctx):
 
     embed_admin.set_footer(text="Achtung: Nur Admins können diese Befehle ausführen!")
     
-    # Send all embeds
+    
     await ctx.send(embed=embed_general)
     await ctx.send(embed=embed_casino)
     await ctx.send(embed=embed_admin)
@@ -908,7 +910,7 @@ async def warn(ctx, member: discord.Member, *, reason: str):
         return
 
     try:
-        # Sicherstellen, dass der 'warns'-Key existiert
+        
         if 'warns' not in data:
             data['warns'] = {}
 
